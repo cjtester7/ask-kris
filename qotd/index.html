@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Question of the Day — The Real Estate Roundup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+
+/* ─── RESET & BASE ─────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --navy:        #0a1628;
+  --navy-mid:    #122040;
+  --gold:        #c9a84c;
+  --gold-light:  #e8c97a;
+  --gold-pale:   #f5e9c4;
+  --cream:       #f5f0e8;
+  --cream-dark:  #ede7da;
+  --white:       #ffffff;
+  --text:        #1a2440;
+  --muted:       #6b7a99;
+  --border:      #ddd8ce;
+  --correct:     #1a7a4a;
+  --correct-bg:  #eaf7f0;
+  --wrong:       #9a2a2a;
+  --wrong-bg:    #fdf0f0;
+  --radius:      12px;
+  --shadow:      0 8px 32px rgba(10,22,40,0.12);
+  --shadow-lg:   0 20px 60px rgba(10,22,40,0.18);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Lato', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── HEADER ───────────────────────────────────────────── */
+.site-header {
+  background: var(--navy);
+  border-bottom: 3px solid var(--gold);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.site-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  color: var(--gold);
+  text-decoration: none;
+  letter-spacing: 0.3px;
+}
+.site-logo span { color: rgba(255,255,255,0.7); }
+.header-badge {
+  background: rgba(201,168,76,0.15);
+  border: 1px solid rgba(201,168,76,0.35);
+  color: var(--gold);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 100px;
+}
+
+/* ─── HERO STRIP ───────────────────────────────────────── */
+.hero-strip {
+  background: var(--navy);
+  padding: 36px 24px 32px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero-strip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 120%, rgba(201,168,76,0.1) 0%, transparent 65%);
+  pointer-events: none;
+}
+.hero-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.hero-date {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--white);
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+.hero-date em {
+  color: var(--gold);
+  font-style: normal;
+}
+.hero-sub {
+  color: rgba(255,255,255,0.45);
+  font-size: 0.82rem;
+  font-weight: 300;
+}
+
+/* ─── MAIN LAYOUT ──────────────────────────────────────── */
+.page-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+}
+
+/* ─── LOADING STATE ────────────────────────────────────── */
+#loadingState {
+  text-align: center;
+  padding: 60px 20px;
+}
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--cream-dark);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#loadingState p { color: var(--muted); font-size: 0.9rem; }
+
+/* ─── ERROR STATE ──────────────────────────────────────── */
+#errorState {
+  display: none;
+  text-align: center;
+  padding: 60px 20px;
+}
+#errorState .error-icon { font-size: 2.5rem; margin-bottom: 16px; }
+#errorState h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--navy); margin-bottom: 10px; }
+#errorState p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+
+/* ─── QUESTION CARD ────────────────────────────────────── */
+#questionState { display: none; }
+
+.topic-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--navy);
+  color: var(--gold);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 5px 13px;
+  border-radius: 100px;
+  margin-bottom: 18px;
+  animation: fadeUp 0.5s ease both;
+}
+
+.question-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 28px 28px 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  animation: fadeUp 0.5s ease 0.1s both;
+}
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(16px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+.question-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+.question-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.35rem;
+  color: var(--navy);
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+/* ─── ANSWER OPTIONS ───────────────────────────────────── */
+.options-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+  animation: fadeUp 0.5s ease 0.2s both;
+}
+
+.options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeUp 0.5s ease 0.25s both;
+}
+
+.option-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s, box-shadow 0.15s;
+  font-family: 'Lato', sans-serif;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+.option-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold-pale);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.option-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(201,168,76,0.15);
+}
+.option-btn:hover:not(:disabled)::before { opacity: 1; }
+.option-btn:active:not(:disabled) { transform: translateY(0); }
+.option-btn:disabled { cursor: default; }
+
+.option-letter {
+  flex-shrink: 0;
+  width: 34px; height: 34px;
+  background: var(--cream);
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--navy);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  position: relative;
+  z-index: 1;
+}
+.option-text {
+  font-size: 0.92rem;
+  color: var(--text);
+  font-weight: 400;
+  line-height: 1.4;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+
+/* Answer revealed states */
+.option-btn.correct {
+  border-color: var(--correct);
+  background: var(--correct-bg);
+  animation: correctPop 0.4s ease;
+}
+.option-btn.correct::before { opacity: 0; }
+.option-btn.correct .option-letter {
+  background: var(--correct);
+  border-color: var(--correct);
+  color: white;
+}
+.option-btn.correct .option-text { color: var(--correct); font-weight: 700; }
+
+.option-btn.wrong {
+  border-color: #d4a0a0;
+  background: var(--wrong-bg);
+}
+.option-btn.wrong::before { opacity: 0; }
+.option-btn.wrong .option-letter {
+  background: #e8c0c0;
+  border-color: #d4a0a0;
+  color: var(--wrong);
+}
+.option-btn.wrong .option-text { color: #8a3a3a; }
+
+.option-btn.neutral-out {
+  opacity: 0.45;
+}
+
+@keyframes correctPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.025); }
+  100% { transform: scale(1); }
+}
+
+/* Result icon in letter circle */
+.option-btn.correct .option-letter::after { content: '✓'; font-size: 1rem; }
+.option-btn.wrong   .option-letter::after { content: '✗'; font-size: 1rem; }
+.option-btn.correct .option-letter-text,
+.option-btn.wrong   .option-letter-text { display: none; }
+
+/* ─── ANSWER REVEAL ────────────────────────────────────── */
+#revealSection {
+  display: none;
+  animation: fadeUp 0.5s ease both;
+  margin-top: 24px;
+}
+
+.result-banner {
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.result-banner.correct-banner {
+  background: var(--correct-bg);
+  border: 1.5px solid var(--correct);
+}
+.result-banner.wrong-banner {
+  background: var(--wrong-bg);
+  border: 1.5px solid #d4a0a0;
+}
+.result-icon { font-size: 1.8rem; flex-shrink: 0; }
+.result-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.correct-banner .result-title { color: var(--correct); }
+.wrong-banner   .result-title { color: var(--wrong); }
+.result-sub { font-size: 0.82rem; color: var(--muted); }
+
+/* Explanation card */
+.explanation-card {
+  background: var(--navy);
+  border-radius: var(--radius);
+  padding: 24px 24px 20px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.explanation-card::before {
+  content: '"';
+  position: absolute;
+  top: -10px; left: 16px;
+  font-family: 'Playfair Display', serif;
+  font-size: 6rem;
+  color: rgba(201,168,76,0.12);
+  line-height: 1;
+  pointer-events: none;
+}
+.explanation-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+.explanation-text {
+  color: rgba(255,255,255,0.85);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  position: relative;
+  z-index: 1;
+}
+.explanation-sig {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sig-avatar {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--gold), #8a6520);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.85rem;
+  color: var(--navy);
+  flex-shrink: 0;
+}
+.sig-name { font-size: 0.82rem; color: rgba(255,255,255,0.6); }
+.sig-name strong { color: var(--gold); display: block; font-size: 0.85rem; }
+
+/* ─── PRODUCT CTA ──────────────────────────────────────── */
+.product-cta {
+  background: var(--cream-dark);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 22px 20px;
+  margin-bottom: 16px;
+}
+.product-cta-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.product-cta-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+.product-cta-desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+.btn-primary {
+  display: block;
+  background: var(--gold);
+  color: var(--navy);
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-align: center;
+  text-decoration: none;
+  padding: 14px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s;
+  letter-spacing: 0.3px;
+}
+.btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+
+/* Consultation nudge */
+.consult-nudge {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.nudge-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+.nudge-text { font-size: 0.85rem; color: var(--text); line-height: 1.6; }
+.nudge-text strong { color: var(--navy); display: block; margin-bottom: 3px; font-size: 0.9rem; }
+.nudge-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(201,168,76,0.4);
+  transition: border-color 0.15s;
+}
+.nudge-link:hover { border-color: var(--gold); }
+
+/* Video link */
+.video-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.12s;
+  margin-bottom: 16px;
+}
+.video-link:hover { border-color: var(--gold); transform: translateY(-1px); }
+.video-play {
+  width: 36px; height: 36px;
+  background: var(--navy);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.video-play::after {
+  content: '';
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 6px 0 6px 11px;
+  border-color: transparent transparent transparent var(--gold);
+  margin-left: 2px;
+}
+.video-info .video-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.video-info .video-title { font-size: 0.9rem; font-weight: 700; color: var(--navy); }
+
+/* ─── SHARE + NEXT ─────────────────────────────────────── */
+.share-strip {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+.btn-secondary {
+  flex: 1;
+  background: var(--white);
+  color: var(--navy);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.btn-secondary:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-1px); }
+
+/* ─── POST-REVEAL OPT-IN STRIP ─────────────────────────── */
+.optin-strip {
+  background: var(--navy);
+  border-radius: var(--radius);
+  padding: 24px 24px 22px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp 0.5s ease both;
+}
+.optin-strip::before {
+  content: '✉';
+  position: absolute;
+  right: 16px; top: 10px;
+  font-size: 5rem;
+  color: rgba(201,168,76,0.07);
+  pointer-events: none;
+  line-height: 1;
+}
+.optin-badge {
+  display: inline-block;
+  background: rgba(201,168,76,0.15);
+  border: 1px solid rgba(201,168,76,0.3);
+  color: var(--gold);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 100px;
+  margin-bottom: 12px;
+}
+.optin-strip h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  color: var(--white);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+.optin-strip p {
+  font-size: 0.84rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.optin-form { display: flex; flex-direction: column; gap: 10px; }
+.optin-input {
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 13px 16px;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.9rem;
+  color: var(--white);
+  background: rgba(255,255,255,0.08);
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.optin-input:focus { border-color: var(--gold); background: rgba(255,255,255,0.12); }
+.optin-input::placeholder { color: rgba(255,255,255,0.35); }
+.optin-success {
+  display: none;
+  text-align: center;
+  padding: 14px 0 4px;
+}
+.optin-success .success-icon { font-size: 2rem; margin-bottom: 8px; display: block; }
+.optin-success p { color: rgba(255,255,255,0.75); font-size: 0.88rem; margin: 0; }
+.optin-success strong { color: var(--gold); }
+
+/* ─── FOOTER ───────────────────────────────────────────── */
+.site-footer {
+  background: var(--navy);
+  border-top: 2px solid var(--gold);
+  padding: 24px;
+  text-align: center;
+  margin-top: 40px;
+}
+.site-footer p { color: rgba(255,255,255,0.35); font-size: 0.75rem; }
+.site-footer a { color: var(--gold); text-decoration: none; }
+
+/* ─── RESPONSIVE ───────────────────────────────────────── */
+@media (min-width: 500px) {
+  .hero-date { font-size: 2.6rem; }
+  .question-text { font-size: 1.5rem; }
+  .page-wrap { padding: 40px 24px 80px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- SITE HEADER -->
+<header class="site-header">
+  <a href="https://www.therealestateroundup.com" class="site-logo">
+    The Real Estate <span>Roundup</span>
+  </a>
+  <span class="header-badge">Daily Question</span>
+</header>
+
+<!-- HERO STRIP -->
+<div class="hero-strip">
+  <div class="hero-eyebrow">Millionaire Real Estate Investing</div>
+  <div class="hero-date" id="heroDate">Loading…</div>
+  <div class="hero-sub">Test your knowledge. Build your wealth.</div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="page-wrap">
+
+  <!-- LOADING -->
+  <div id="loadingState">
+    <div class="spinner"></div>
+    <p>Loading today's question…</p>
+  </div>
+
+  <!-- ERROR -->
+  <div id="errorState">
+    <div class="error-icon">📭</div>
+    <h3>No question today</h3>
+    <p>There's no Question of the Day scheduled for today.<br>Check back tomorrow — or browse Kris's courses below.</p>
+    <br>
+    <a href="https://www.therealestateroundup.com/catalog/" class="btn-primary" style="display:inline-block;max-width:280px;margin:0 auto;">Browse Courses →</a>
+  </div>
+
+  <!-- QUESTION -->
+  <div id="questionState">
+
+    <!-- Topic tag -->
+    <div id="topicTag" class="topic-tag">
+      <span>📍</span>
+      <span id="topicText">Loading…</span>
+    </div>
+
+    <!-- Question card -->
+    <div class="question-card">
+      <div class="question-label">❓ Question of the Day</div>
+      <div class="question-text" id="questionText">Loading…</div>
+    </div>
+
+    <!-- Options -->
+    <div class="options-label">Select your answer:</div>
+    <div class="options-grid" id="optionsGrid">
+      <!-- Injected by JS -->
+    </div>
+
+    <!-- Reveal section (hidden until answer selected) -->
+    <div id="revealSection">
+
+      <!-- Result banner -->
+      <div id="resultBanner" class="result-banner">
+        <div class="result-icon" id="resultIcon"></div>
+        <div>
+          <div class="result-title" id="resultTitle"></div>
+          <div class="result-sub" id="resultSub"></div>
+        </div>
+      </div>
+
+      <!-- Kris's explanation -->
+      <div class="explanation-card">
+        <div class="explanation-label">✦ Kris's Answer</div>
+        <div class="explanation-text" id="explanationText"></div>
+        <div class="explanation-sig">
+          <div class="sig-avatar">K</div>
+          <div class="sig-name">
+            <strong>Kris Haskins</strong>
+            Real Estate Investor since 2004
+          </div>
+        </div>
+      </div>
+
+      <!-- Product CTA -->
+      <div id="productCta" class="product-cta" style="display:none;">
+        <div class="product-cta-label">✦ Take it further</div>
+        <div class="product-cta-name" id="productName"></div>
+        <div class="product-cta-desc" id="productDesc"></div>
+        <a href="#" id="productLink" class="btn-primary" target="_blank" rel="noopener">
+          Get Access Now →
+        </a>
+      </div>
+
+      <!-- Video link -->
+      <a href="#" id="videoLink" class="video-link" target="_blank" rel="noopener" style="display:none;">
+        <div class="video-play"></div>
+        <div class="video-info">
+          <div class="video-label">Watch on YouTube</div>
+          <div class="video-title">Kris explains this in detail</div>
+        </div>
+      </a>
+
+      <!-- Consultation nudge -->
+      <div class="consult-nudge">
+        <div class="nudge-icon">👉</div>
+        <div class="nudge-text">
+          <strong>Before you pull the trigger on that next deal…</strong>
+          I've been doing this since 2004 — one conversation can keep you from stepping into a headache. Let's make sure your numbers actually work.
+          <a href="https://www.therealestateroundup.com/one-time-consultation/" class="nudge-link" target="_blank">Book a session with Kris →</a>
+        </div>
+      </div>
+
+      <!-- Post-reveal opt-in strip -->
+      <div class="optin-strip" id="optinStrip">
+        <span class="optin-badge">📬 Free Daily Tips</span>
+        <h3>Enjoyed today's question?</h3>
+        <p>Get tomorrow's question delivered straight to your inbox — plus exclusive real estate investing tips from Kris. Free, no spam, unsubscribe anytime.</p>
+        <div class="optin-form" id="optinForm">
+          <input type="text" class="optin-input" id="optinName" placeholder="First name (optional)" autocomplete="given-name">
+          <input type="email" class="optin-input" id="optinEmail" placeholder="Your email address" autocomplete="email">
+          <button class="btn-primary" onclick="submitOptin()" style="background:var(--gold);color:var(--navy);">
+            Send Me Tomorrow's Question →
+          </button>
+        </div>
+        <div class="optin-success" id="optinSuccess">
+          <span class="success-icon">🎉</span>
+          <p>You're in! <strong>Check your inbox tomorrow morning</strong> for your next question.</p>
+        </div>
+      </div>
+
+      <!-- Share buttons -->
+      <div class="share-strip">
+        <button class="btn-secondary" onclick="shareQuestion()">
+          <span>🔗</span> Share
+        </button>
+        <a href="https://www.therealestateroundup.com/catalog/" class="btn-secondary">
+          <span>📚</span> All Courses
+        </a>
+        <a href="https://www.youtube.com/channel/UCsMdIzwLBuCWrFt9zqhX2bA" class="btn-secondary" target="_blank">
+          <span>▶</span> YouTube
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <p>© Kris Haskins · <a href="https://www.therealestateroundup.com">The Real Estate Roundup</a> · <a href="https://www.therealestateroundup.com/contact-me/">Contact</a></p>
+</footer>
+
+<script>
+// ─── CONFIG ─────────────────────────────────────────────
+// Replace with your deployed Apps Script Web App URL
+const API_URL = 'https://script.google.com/macros/s/AKfycbyFae3UOTbDgwW3GqodMZRuGRWt2zUxz6FkrgOdDJw3M5pPEuZUiOvIPlRlq3Vbe2jf/exec';
+
+// ─── STATE ───────────────────────────────────────────────
+let qotdData       = null;
+let selectedAnswer = null;
+
+// ─── INIT ────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  setHeroDate();
+  hideOptinIfReturning();
+
+  const params = new URLSearchParams(window.location.search);
+  const preAns = params.get('answer');
+  loadQOTD(preAns);
+});
+
+function setHeroDate() {
+  const d = new Date();
+  const month = d.toLocaleDateString('en-US', { month: 'long' });
+  const day   = d.toLocaleDateString('en-US', { day: 'numeric' });
+  const year  = d.getFullYear();
+  document.getElementById('heroDate').innerHTML =
+    `<em>${month} ${day}</em>, ${year}`;
+}
+
+function hideOptinIfReturning() {
+  try {
+    if (localStorage.getItem('askKrisOptIn')) {
+      const strip = document.getElementById('optinStrip');
+      if (strip) strip.style.display = 'none';
+    }
+  } catch(e) {}
+}
+
+// ─── DEMO DATA ───────────────────────────────────────────
+const DEMO_QOTD = {
+  id:            'DEMO_001',
+  question:      'When selling a flip, which expense do most investors forget to budget for — causing them to lose profit at closing?',
+  topic:         'Flipping Houses',
+  optionA:       "Paying the buyer's closing costs as a seller concession",
+  optionB:       'Ordering the initial home inspection',
+  optionC:       'Paying for the appraisal',
+  optionD:       "Covering the buyer's moving expenses",
+  correctAnswer: 'A',
+  explanation:   "When I first started flipping houses, I thought once I bought it right and fixed it up, I was done. But then buyers started asking for things — credits, help with closing costs, contributions. And I hadn't factored that into my numbers when I bought the property. Seller concessions can quietly eat 1–3% of your profit if you don't plan for them upfront. Always budget for this on the buy side!",
+  productLink:   'https://www.therealestateroundup.com/ninja-negotiating-sales/',
+  videoLink:     'https://www.youtube.com/channel/UCsMdIzwLBuCWrFt9zqhX2bA',
+  relatedProduct:'PROD_001'
+};
+
+// ─── LOAD QOTD ───────────────────────────────────────────
+async function loadQOTD(preSelectedAnswer) {
+  show('loadingState');
+
+  // Use demo data immediately if API not yet configured
+  if (!API_URL || API_URL === 'REPLACE_WITH_YOUR_APPS_SCRIPT_URL') {
+    setTimeout(() => {
+      qotdData = DEMO_QOTD;
+      renderQuestion(qotdData);
+      if (preSelectedAnswer && ['A','B','C','D'].includes(preSelectedAnswer.toUpperCase())) {
+        setTimeout(() => handleAnswer(preSelectedAnswer.toUpperCase()), 600);
+      }
+    }, 600);
+    return;
+  }
+
+  // Check URL for specific date/id (from email link)
+  const params = new URLSearchParams(window.location.search);
+  const dateParam = params.get('date');
+  const idParam   = params.get('id');
+
+  try {
+    let url = API_URL + '?action=getTodayQOTD';
+    if (dateParam) url += '&date=' + encodeURIComponent(dateParam);
+    if (idParam)   url += '&id='   + encodeURIComponent(idParam);
+
+    const res  = await fetch(url);
+    const json = await res.json();
+
+    if (json.status !== 'ok' || !json.data) {
+      showError();
+      return;
+    }
+
+    qotdData = json.data;
+    renderQuestion(qotdData);
+
+    // If user clicked a specific answer in the email
+    if (preSelectedAnswer && ['A','B','C','D'].includes(preSelectedAnswer.toUpperCase())) {
+      setTimeout(() => handleAnswer(preSelectedAnswer.toUpperCase()), 600);
+    }
+
+  } catch(err) {
+    console.error('QOTD load error:', err);
+    // Fall back to demo data on any network/parse error
+    qotdData = DEMO_QOTD;
+    renderQuestion(qotdData);
+  }
+}
+
+// ─── RENDER QUESTION ─────────────────────────────────────
+function renderQuestion(q) {
+  hide('loadingState');
+  show('questionState');
+
+  document.getElementById('topicText').textContent  = q.topic || 'Real Estate Investing';
+  document.getElementById('questionText').textContent = q.question;
+
+  const options = [
+    { letter: 'A', text: q.optionA },
+    { letter: 'B', text: q.optionB },
+    { letter: 'C', text: q.optionC },
+    { letter: 'D', text: q.optionD }
+  ].filter(o => o.text && o.text.trim() !== '');
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+
+  options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.id = 'opt_' + opt.letter;
+    btn.style.animationDelay = (0.3 + i * 0.07) + 's';
+    btn.innerHTML = `
+      <div class="option-letter">
+        <span class="option-letter-text">${opt.letter}</span>
+      </div>
+      <div class="option-text">${opt.text}</div>
+    `;
+    btn.addEventListener('click', () => handleAnswer(opt.letter));
+    grid.appendChild(btn);
+  });
+}
+
+// ─── HANDLE ANSWER SELECTION ─────────────────────────────
+function handleAnswer(letter) {
+  if (selectedAnswer) return;
+  selectedAnswer = letter;
+  revealAnswer(letter);
+}
+
+function revealAnswer(letter) {
+  const correct = qotdData.correctAnswer.toUpperCase();
+  const isRight = letter === correct;
+
+  // Disable all buttons
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.disabled = true;
+  });
+
+  // Style selected option
+  const selectedBtn = document.getElementById('opt_' + letter);
+  if (selectedBtn) {
+    selectedBtn.classList.add(isRight ? 'correct' : 'wrong');
+  }
+
+  // If wrong, also reveal the correct answer
+  if (!isRight) {
+    const correctBtn = document.getElementById('opt_' + correct);
+    if (correctBtn) correctBtn.classList.add('correct');
+  }
+
+  // Fade out other options
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    if (!btn.classList.contains('correct') && !btn.classList.contains('wrong')) {
+      btn.classList.add('neutral-out');
+    }
+  });
+
+  // Show result banner
+  const banner = document.getElementById('resultBanner');
+  const icon   = document.getElementById('resultIcon');
+  const title  = document.getElementById('resultTitle');
+  const sub    = document.getElementById('resultSub');
+
+  if (isRight) {
+    banner.className = 'result-banner correct-banner';
+    icon.textContent  = '🎉';
+    title.textContent = 'That\'s correct!';
+    sub.textContent   = 'Great investing instinct. Here\'s Kris\'s full breakdown:';
+  } else {
+    banner.className = 'result-banner wrong-banner';
+    icon.textContent  = '💡';
+    title.textContent = 'Not quite — but now you\'ll know!';
+    sub.textContent   = `The correct answer is ${correct}. Kris explains why:`;
+  }
+
+  // Explanation
+  document.getElementById('explanationText').textContent =
+    qotdData.explanation || 'Check out the related course below to learn more about this topic.';
+
+  // Product CTA
+  if (qotdData.productLink) {
+    const productCta  = document.getElementById('productCta');
+    const productName = document.getElementById('productName');
+    const productDesc = document.getElementById('productDesc');
+    const productLink = document.getElementById('productLink');
+
+    productName.textContent = getProductName(qotdData);
+    productDesc.textContent = getProductDesc(qotdData);
+    productLink.href = qotdData.productLink;
+    productCta.style.display = 'block';
+  }
+
+  // Video link
+  if (qotdData.videoLink) {
+    const vl = document.getElementById('videoLink');
+    vl.href = qotdData.videoLink;
+    vl.style.display = 'flex';
+  }
+
+  // Show reveal section
+  const reveal = document.getElementById('revealSection');
+  reveal.style.display = 'block';
+  setTimeout(() => reveal.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+}
+
+// ─── POST-REVEAL OPT-IN ──────────────────────────────────
+async function submitOptin() {
+  const name  = document.getElementById('optinName').value.trim();
+  const email = document.getElementById('optinEmail').value.trim();
+
+  if (!email || !email.includes('@')) {
+    const input = document.getElementById('optinEmail');
+    input.focus();
+    input.style.borderColor = '#e88080';
+    setTimeout(() => input.style.borderColor = '', 2000);
+    return;
+  }
+
+  // Save to Apps Script Leads sheet
+  try {
+    const params = new URLSearchParams({
+      action:   'addLead',
+      name:     name,
+      email:    email,
+      source:   'qotd-optin',
+      question: qotdData ? qotdData.question : ''
+    });
+    fetch(API_URL + '?' + params.toString());
+  } catch(e) {}
+
+  // Remember locally so we don't ask again
+  try { localStorage.setItem('askKrisOptIn', '1'); } catch(e) {}
+
+  // Show success state
+  document.getElementById('optinForm').style.display    = 'none';
+  document.getElementById('optinSuccess').style.display = 'block';
+}
+
+// ─── SHARE ────────────────────────────────────────────────
+function shareQuestion() {
+  const text = qotdData
+    ? `Can you answer today's real estate question? "${qotdData.question}" — Test yourself at The Real Estate Roundup!`
+    : 'Check out this real estate question from Kris Haskins!';
+
+  if (navigator.share) {
+    navigator.share({ title: 'Question of the Day', text: text, url: window.location.href });
+  } else {
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => alert('Link copied to clipboard!'))
+      .catch(() => alert('Share this link: ' + window.location.href));
+  }
+}
+
+// ─── HELPERS ─────────────────────────────────────────────
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+function getProductName(q) {
+  // Try to match from known products via topic tags
+  const topic = (q.topic || '').toLowerCase();
+  if (topic.includes('negotiat'))    return 'Ninja Negotiating — 11 Module Series';
+  if (topic.includes('section 8') || topic.includes('landlord')) return "Landlord's Guide to Section 8 Housing";
+  if (topic.includes('market'))      return 'YouTube & Internet Marketing Master Class';
+  if (topic.includes('trust'))       return 'Land Trust Document Packet';
+  if (topic.includes('subject'))     return '"Subject To" Document Packet';
+  return 'Kris Haskins Course — Go Deeper';
+}
+
+function getProductDesc(q) {
+  const topic = (q.topic || '').toLowerCase();
+  if (topic.includes('negotiat'))
+    return 'Master the exact negotiation tactics Kris uses to get the best deals — 11 in-depth modules covering every stage of the process.';
+  if (topic.includes('section 8') || topic.includes('landlord'))
+    return 'Everything you need to know about Section 8 — qualify, find tenants, and build consistent government-backed rental income.';
+  if (topic.includes('market'))
+    return 'Learn the YouTube and internet marketing strategies Kris used to build his audience and his real estate business.';
+  return 'Take your real estate knowledge further with Kris\'s in-depth training.';
+}
+
+
+</script>
+</body>
+</html>

@@ -3,6 +3,13 @@
 
 [build]
   publish = "."
+  functions = "netlify/functions"
+
+# ─── API ROUTE ────────────────────────────────────────────
+[[redirects]]
+  from   = "/api/chat"
+  to     = "/.netlify/functions/chat"
+  status = 200
 
 # ─── REDIRECTS ───────────────────────────────────────────
 [[redirects]]

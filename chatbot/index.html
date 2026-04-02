@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ask Kris — Real Estate AI Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --navy:#0a1628; --navy-mid:#122040; --navy-light:#1e3a5f;
+  --gold:#c9a84c; --gold-light:#e8c97a; --gold-pale:#f5e9c4;
+  --cream:#f5f0e8; --cream-dark:#ede7da; --white:#ffffff;
+  --text:#1a2440; --muted:#6b7a99; --border:#ddd8ce;
+  --correct:#1a7a4a;
+}
+html, body { height:100%; font-family:'Lato',sans-serif; background:var(--cream); color:var(--text); overflow:hidden; }
+
+/* ── FULL PAGE LAYOUT ── */
+.chat-page { display:flex; flex-direction:column; height:100vh; max-width:760px; margin:0 auto; background:var(--white); box-shadow:0 0 60px rgba(10,22,40,0.12); }
+
+/* ── HEADER ── */
+.chat-header { background:var(--navy); border-bottom:3px solid var(--gold); padding:14px 20px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.header-avatar { width:44px; height:44px; background:linear-gradient(135deg,var(--gold),#8a6520); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:900; color:var(--navy); flex-shrink:0; border:2px solid rgba(201,168,76,0.4); }
+.header-info { flex:1; }
+.header-name { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:var(--white); margin-bottom:2px; }
+.header-status { display:flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--gold); }
+.status-dot { width:6px; height:6px; background:#4ade80; border-radius:50%; }
+.header-cta { background:var(--gold); color:var(--navy); border:none; padding:9px 16px; border-radius:6px; font-family:'Lato',sans-serif; font-weight:700; font-size:0.78rem; cursor:pointer; text-decoration:none; display:flex; align-items:center; gap:5px; transition:background 0.15s; white-space:nowrap; flex-shrink:0; }
+.header-cta:hover { background:var(--gold-light); }
+.header-back { color:rgba(255,255,255,0.45); font-size:0.75rem; text-decoration:none; display:flex; align-items:center; gap:5px; padding:6px 10px; border-radius:5px; transition:color 0.15s; flex-shrink:0; }
+.header-back:hover { color:var(--gold); }
+
+/* ── MESSAGES ── */
+.chat-messages { flex:1; overflow-y:auto; padding:20px 20px; display:flex; flex-direction:column; gap:16px; scroll-behavior:smooth; background:var(--cream); }
+.chat-messages::-webkit-scrollbar { width:4px; }
+.chat-messages::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+@keyframes msgIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+.msg { display:flex; flex-direction:column; max-width:82%; animation:msgIn 0.3s ease both; }
+.msg.kris { align-self:flex-start; }
+.msg.user { align-self:flex-end; }
+.msg-meta { font-size:0.68rem; font-weight:700; color:var(--muted); margin-bottom:5px; }
+.msg.user .msg-meta { text-align:right; }
+.msg-bubble { padding:13px 17px; border-radius:16px; font-size:0.92rem; line-height:1.6; }
+.msg.kris .msg-bubble { background:var(--white); color:var(--text); border-bottom-left-radius:4px; border:1px solid var(--border); box-shadow:0 2px 8px rgba(10,22,40,0.06); }
+.msg.user .msg-bubble { background:var(--navy); color:rgba(255,255,255,0.92); border-bottom-right-radius:4px; }
+
+/* Product card in chat */
+.product-card { background:var(--white); border:1.5px solid var(--gold); border-radius:12px; padding:16px 18px; margin-top:10px; max-width:340px; animation:msgIn 0.3s ease 0.1s both; }
+.product-card-tag { font-size:0.65rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold); margin-bottom:7px; }
+.product-card-name { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:var(--navy); margin-bottom:5px; line-height:1.3; }
+.product-card-desc { font-size:0.82rem; color:var(--muted); line-height:1.5; margin-bottom:12px; }
+.product-card-btn { display:block; background:var(--gold); color:var(--navy); font-family:'Lato',sans-serif; font-weight:700; font-size:0.82rem; text-align:center; text-decoration:none; padding:10px 16px; border-radius:7px; border:none; cursor:pointer; transition:background 0.15s; }
+.product-card-btn:hover { background:var(--gold-light); }
+
+/* Typing indicator */
+.typing-wrap { display:flex; align-items:flex-end; gap:8px; align-self:flex-start; animation:msgIn 0.3s ease both; }
+.typing-avatar { width:30px; height:30px; background:linear-gradient(135deg,var(--gold),#8a6520); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:900; color:var(--navy); flex-shrink:0; }
+.typing-bubble { background:var(--white); border:1px solid var(--border); border-radius:16px; border-bottom-left-radius:4px; padding:14px 18px; display:flex; gap:5px; align-items:center; box-shadow:0 2px 8px rgba(10,22,40,0.06); }
+.typing-dot { width:7px; height:7px; background:var(--muted); border-radius:50%; animation:typingBounce 1.2s infinite ease-in-out; }
+.typing-dot:nth-child(2) { animation-delay:0.2s; }
+.typing-dot:nth-child(3) { animation-delay:0.4s; }
+@keyframes typingBounce { 0%,80%,100%{transform:translateY(0);opacity:0.5;} 40%{transform:translateY(-6px);opacity:1;} }
+
+/* ── SUGGESTIONS ── */
+.suggestions-wrap { padding:0 20px 10px; display:flex; gap:8px; flex-wrap:wrap; flex-shrink:0; background:var(--cream); }
+.suggestion-chip { background:var(--white); border:1.5px solid var(--border); color:var(--navy); font-size:0.78rem; font-weight:600; padding:7px 14px; border-radius:100px; cursor:pointer; font-family:'Lato',sans-serif; transition:border-color 0.15s,color 0.15s,background 0.15s; white-space:nowrap; }
+.suggestion-chip:hover { border-color:var(--gold); color:var(--gold); background:var(--gold-pale); }
+
+/* ── INPUT ROW ── */
+.chat-input-row { padding:14px 20px; background:var(--white); border-top:1px solid var(--border); display:flex; gap:10px; align-items:flex-end; flex-shrink:0; }
+.chat-input { flex:1; border:1.5px solid var(--border); border-radius:10px; padding:12px 16px; font-family:'Lato',sans-serif; font-size:0.92rem; color:var(--text); background:var(--cream); outline:none; resize:none; max-height:120px; min-height:46px; transition:border-color 0.15s; line-height:1.5; }
+.chat-input:focus { border-color:var(--gold); }
+.chat-input::placeholder { color:var(--muted); }
+.send-btn { background:var(--navy); border:none; width:46px; height:46px; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s,transform 0.12s; flex-shrink:0; }
+.send-btn:hover { background:var(--navy-light); transform:translateY(-1px); }
+.send-btn:disabled { opacity:0.4; cursor:default; transform:none; }
+.send-btn svg { width:18px; height:18px; fill:var(--gold); }
+
+/* ── LEAD GATE ── */
+#leadGate { position:fixed; inset:0; background:rgba(10,22,40,0.82); z-index:50; display:flex; align-items:center; justify-content:center; padding:24px; backdrop-filter:blur(6px); }
+.lead-card { background:var(--white); border-radius:16px; padding:32px 28px; max-width:400px; width:100%; box-shadow:0 24px 60px rgba(0,0,0,0.3); animation:msgIn 0.35s ease both; }
+.lead-card-badge { background:var(--navy); color:var(--gold); font-size:0.65rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:4px 12px; border-radius:100px; display:inline-block; margin-bottom:14px; }
+.lead-card h3 { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--navy); margin-bottom:8px; line-height:1.25; }
+.lead-card p { font-size:0.85rem; color:var(--muted); line-height:1.65; margin-bottom:20px; }
+.lead-inputs { display:flex; flex-direction:column; gap:10px; margin-bottom:12px; }
+.lead-input { border:1.5px solid var(--border); border-radius:8px; padding:12px 15px; font-family:'Lato',sans-serif; font-size:0.9rem; color:var(--text); background:var(--cream); outline:none; transition:border-color 0.15s; }
+.lead-input:focus { border-color:var(--gold); }
+.lead-input.error { border-color:#d4a0a0; }
+.lead-input::placeholder { color:var(--muted); }
+.btn-gold-full { display:block; width:100%; background:var(--gold); color:var(--navy); border:none; padding:13px; border-radius:8px; font-family:'Lato',sans-serif; font-weight:700; font-size:0.92rem; cursor:pointer; transition:background 0.15s; margin-bottom:10px; }
+.btn-gold-full:hover { background:var(--gold-light); }
+.lead-skip { text-align:center; font-size:0.78rem; color:var(--muted); }
+.lead-skip a { color:var(--muted); cursor:pointer; text-decoration:underline; }
+.lead-privacy { text-align:center; font-size:0.68rem; color:var(--muted); margin-top:10px; opacity:0.7; }
+
+/* ── RESPONSIVE ── */
+@media (min-width:760px) {
+  body { background:var(--navy); }
+  .chat-page { height:100vh; border-radius:0; }
+}
+</style>
+</head>
+<body>
+
+<!-- LEAD GATE -->
+<div id="leadGate">
+  <div class="lead-card">
+    <span class="lead-card-badge">👋 Welcome</span>
+    <h3>Get Answers from Kris's Full Knowledge Base</h3>
+    <p>Enter your details to start chatting — Ask Kris is trained on Kris's courses, YouTube content, and real investing experience.</p>
+    <div class="lead-inputs">
+      <input type="text"  class="lead-input" id="gateName"  placeholder="First name" autocomplete="given-name">
+      <input type="email" class="lead-input" id="gateEmail" placeholder="Email address" autocomplete="email">
+    </div>
+    <button class="btn-gold-full" onclick="submitGate()">Start Chatting with Ask Kris →</button>
+    <div class="lead-skip"><a onclick="skipGate()">Skip for now</a></div>
+    <div class="lead-privacy">🔒 No spam. Unsubscribe anytime.</div>
+  </div>
+</div>
+
+<!-- CHAT PAGE -->
+<div class="chat-page">
+
+  <!-- HEADER -->
+  <div class="chat-header">
+    <div class="header-avatar">K</div>
+    <div class="header-info">
+      <div class="header-name">Ask Kris</div>
+      <div class="header-status"><span class="status-dot"></span> Real Estate AI · Powered by Kris Haskins</div>
+    </div>
+    <a href="https://www.therealestateroundup.com/one-time-consultation/" class="header-cta" target="_blank" rel="noopener">📅 Book 1-on-1</a>
+    <a href="/" class="header-back">← Daily Question</a>
+  </div>
+
+  <!-- MESSAGES -->
+  <div class="chat-messages" id="chatMessages"></div>
+
+  <!-- SUGGESTIONS -->
+  <div class="suggestions-wrap" id="suggestionsWrap">
+    <button class="suggestion-chip" onclick="sendChip(this)">How does Section 8 work?</button>
+    <button class="suggestion-chip" onclick="sendChip(this)">How do I flip my first house?</button>
+    <button class="suggestion-chip" onclick="sendChip(this)">What is a subject-to deal?</button>
+    <button class="suggestion-chip" onclick="sendChip(this)">How do I find private money?</button>
+  </div>
+
+  <!-- INPUT -->
+  <div class="chat-input-row">
+    <textarea class="chat-input" id="chatInput" placeholder="Ask Kris anything about real estate…" rows="1"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+      <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+    </button>
+  </div>
+
+</div>
+
+<script>
+// ═══════════ CONFIG ═══════════
+const API_URL = 'https://script.google.com/macros/s/AKfycbyFae3UOTbDgwW3GqodMZRuGRWt2zUxz6FkrgOdDJw3M5pPEuZUiOvIPlRlq3Vbe2jf/exec';
+
+// ═══════════ KNOWLEDGE BASE ═══════════
+const STARTER_KNOWLEDGE = `
+ABOUT KRIS HASKINS:
+Kris Haskins is a real estate investor and educator who has been investing since 2004.
+His mission is helping people build financial literacy through real estate investing.
+He runs The Real Estate Roundup at therealestateroundup.com — 180K+ YouTube subscribers.
+
+COURSES & PRODUCTS:
+1. Ninja Negotiating 11 Module Series — Master negotiation tactics. URL: https://www.therealestateroundup.com/ninja-negotiating-sales/
+2. Landlord's Guide to Section 8 Housing — Government-backed rental income. URL: https://the-real-estate-roundup-com.mykajabi.com/offers/sRsg57Lc/checkout
+3. YouTube & Internet Marketing Master Class — Build your audience. URL: https://krish.thrivecart.com/youtube--internet-marketing-master-class/
+4. Private Money Training — Fund deals without banks. URL: https://the-real-estate-roundup-com.mykajabi.com/offers/nHVXYiZ7/checkout
+5. Land Trust Document Packet — Asset protection and privacy. URL: https://www.therealestateroundup.com/land-trust-product/
+6. Subject-To Document Packet — Buy subject to existing mortgage. URL: https://www.therealestateroundup.com/sub-to-product/
+7. The Real Estate Negotiating Bible — Comprehensive negotiating book. URL: https://krish.thrivecart.com/the-real-estate-negotiating-bible/
+8. One-Time Consultation — 1-on-1 session with Kris. URL: https://www.therealestateroundup.com/one-time-consultation/
+
+KEY CONCEPTS:
+- Seller concessions: Budget 1-3% of sale price — buyers often ask for closing cost help.
+- Section 8: Government-backed rental program — consistent, reliable rent payments.
+- Subject-to deals: Buy subject to existing mortgage without bank qualifying.
+- Land trusts: Keep deals private and protect assets.
+- Private money: Raise funds from private individuals rather than banks.
+- Ninja negotiating: System for best price on every deal.
+`;
+
+// ═══════════ STATE ═══════════
+let conversationHistory = [];
+let knowledgeBase = '';
+let isTyping = false;
+let leadCaptured = false;
+let userName = '';
+
+// ═══════════ INIT ═══════════
+document.addEventListener('DOMContentLoaded', () => {
+  checkLeadStatus();
+  initTextareaResize();
+  loadKnowledgeBase();
+});
+
+function checkLeadStatus() {
+  try {
+    const stored = localStorage.getItem('askKrisUser');
+    if (stored) {
+      const data = JSON.parse(stored);
+      leadCaptured = true;
+      userName = data.name || '';
+      document.getElementById('leadGate').style.display = 'none';
+      document.getElementById('sendBtn').disabled = false;
+      startChat();
+    }
+  } catch(e) {}
+}
+
+// ═══════════ LEAD GATE ═══════════
+async function submitGate() {
+  const name  = document.getElementById('gateName').value.trim();
+  const email = document.getElementById('gateEmail').value.trim();
+  if (!email || !email.includes('@')) {
+    const i = document.getElementById('gateEmail');
+    i.classList.add('error'); i.focus();
+    setTimeout(() => i.classList.remove('error'), 2000);
+    return;
+  }
+  try {
+    fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, source: 'chatbot' })
+    });
+  } catch(e) {}
+  try { localStorage.setItem('askKrisUser', JSON.stringify({ name, email })); } catch(e) {}
+  leadCaptured = true; userName = name;
+  document.getElementById('leadGate').style.display = 'none';
+  document.getElementById('sendBtn').disabled = false;
+  startChat();
+}
+
+function skipGate() {
+  leadCaptured = true;
+  document.getElementById('leadGate').style.display = 'none';
+  document.getElementById('sendBtn').disabled = false;
+  startChat();
+}
+
+// ═══════════ CHAT START ═══════════
+function startChat() {
+  const greeting = userName
+    ? `Hey ${userName}! 👋 I'm Ask Kris — your AI real estate guide trained on Kris Haskins' courses and investing experience. What are you working on today?`
+    : `Hey! 👋 I'm Ask Kris — your AI real estate guide trained on Kris Haskins' courses and investing experience. What real estate question can I help you with today?`;
+  addMessage('kris', greeting);
+}
+
+// ═══════════ KNOWLEDGE BASE ═══════════
+async function loadKnowledgeBase() {
+  if (!API_URL || API_URL === 'REPLACE_WITH_YOUR_APPS_SCRIPT_URL') {
+    knowledgeBase = STARTER_KNOWLEDGE; return;
+  }
+  try {
+    const res  = await fetch(`${API_URL}?action=getKnowledge&status=Active&forChat=true`);
+    const json = await res.json();
+    knowledgeBase = (json.status === 'ok' && json.data.length > 0)
+      ? json.data.map(e => `[${e.type.toUpperCase()}] ${e.title}\n${e.content}`).join('\n\n---\n\n')
+      : STARTER_KNOWLEDGE;
+  } catch(e) { knowledgeBase = STARTER_KNOWLEDGE; }
+}
+
+function buildSystemPrompt() {
+  return `You are "Ask Kris" — the AI sales assistant for Kris Haskins and The Real Estate Roundup.
+Kris is a real estate investor since 2004, 180K+ YouTube subscribers. Mission: helping people build financial literacy through real estate.
+YOUR GOAL: Educate visitors AND guide them toward the right product or consultation.
+KNOWLEDGE BASE:\n${knowledgeBase || STARTER_KNOWLEDGE}
+RULES:
+1. Answer warmly and practically — direct like Kris
+2. Keep responses to 2-4 sentences
+3. ALWAYS end with a product recommendation or consultation nudge
+4. Format product recs as: [PRODUCT: name | url | reason]
+5. For specific deal questions with numbers → recommend One-Time Consultation
+6. Speak as Kris — use "I"
+7. Never invent facts${userName ? `\n8. Visitor's name is ${userName} — use occasionally` : ''}`;
+}
+
+// ═══════════ SEND ═══════════
+function sendChip(btn) {
+  const text = btn.textContent.trim();
+  document.getElementById('suggestionsWrap').style.display = 'none';
+  sendText(text);
+}
+
+function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text  = input.value.trim();
+  if (!text || isTyping) return;
+  input.value = ''; input.style.height = 'auto';
+  document.getElementById('suggestionsWrap').style.display = 'none';
+  sendText(text);
+}
+
+async function sendText(text) {
+  if (isTyping) return;
+  isTyping = true;
+  document.getElementById('sendBtn').disabled = true;
+  addMessage('user', text);
+  conversationHistory.push({ role: 'user', content: text });
+  showTyping();
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system: buildSystemPrompt(), messages: conversationHistory })
+    });
+    const data  = await res.json();
+    const reply = data.content?.[0]?.text || "I'm having trouble connecting. Please try again or visit therealestateroundup.com.";
+    conversationHistory.push({ role: 'assistant', content: reply });
+    removeTyping();
+    renderReply(reply);
+  } catch(err) {
+    removeTyping();
+    addMessage('kris', "Sorry, I hit a snag. Try again or visit therealestateroundup.com for help!");
+  }
+  isTyping = false;
+  document.getElementById('sendBtn').disabled = false;
+}
+
+// ═══════════ RENDER ═══════════
+function renderReply(text) {
+  const m = text.match(/\[PRODUCT:\s*([^|]+)\|\s*([^|]+)\|\s*([^\]]+)\]/);
+  let clean = text, product = null;
+  if (m) {
+    clean   = text.replace(m[0], '').trim();
+    product = { name: m[1].trim(), url: m[2].trim(), reason: m[3].trim() };
+  }
+  addMessage('kris', clean, product);
+}
+
+function addMessage(role, text, product = null) {
+  const wrap = document.getElementById('chatMessages');
+  const div  = document.createElement('div');
+  div.className = `msg ${role}`;
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  meta.textContent = role === 'kris' ? 'Ask Kris' : (userName || 'You');
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = text;
+  div.appendChild(meta);
+  div.appendChild(bubble);
+  if (product) {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    card.innerHTML = `
+      <div class="product-card-tag">✦ Recommended for you</div>
+      <div class="product-card-name">${product.name}</div>
+      <div class="product-card-desc">${product.reason}</div>
+      <a href="${product.url}" class="product-card-btn" target="_blank" rel="noopener">Get Access Now →</a>`;
+    div.appendChild(card);
+  }
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function showTyping() {
+  const wrap = document.getElementById('chatMessages');
+  const div  = document.createElement('div');
+  div.className = 'typing-wrap'; div.id = 'typingIndicator';
+  div.innerHTML = `<div class="typing-avatar">K</div><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+function removeTyping() { const t = document.getElementById('typingIndicator'); if(t) t.remove(); }
+
+// ═══════════ INPUT RESIZE ═══════════
+function initTextareaResize() {
+  const ta = document.getElementById('chatInput');
+  ta.addEventListener('input', () => {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  });
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+}
+</script>
+</body>
+</html>

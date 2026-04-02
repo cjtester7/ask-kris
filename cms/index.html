@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ask Kris CMS v7</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --navy:#0a1628; --navy-mid:#122040; --navy-light:#1e3a5f;
+  --gold:#c9a84c; --gold-light:#e8c97a; --gold-pale:#f5e9c4;
+  --cream:#f5f0e8; --cream-dark:#ede7da; --white:#ffffff;
+  --text:#1a2440; --muted:#6b7a99; --border:#ddd8ce;
+  --success:#1a7a4a; --success-bg:#eaf7f0;
+  --warn:#a06000; --warn-bg:#fff8ec;
+  --danger:#9a2a2a; --danger-bg:#fdf0f0;
+  --radius:10px; --shadow:0 4px 20px rgba(10,22,40,0.1);
+}
+html,body { height:100%; font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--text); font-size:14px; }
+
+/* ── PIN GATE ── */
+#pinGate {
+  position:fixed; inset:0; background:var(--navy); z-index:1000;
+  display:flex; align-items:center; justify-content:center; padding:24px;
+}
+.pin-card {
+  background:rgba(255,255,255,0.05); border:1px solid rgba(201,168,76,0.2);
+  border-radius:16px; padding:40px 36px; max-width:360px; width:100%; text-align:center;
+}
+.pin-logo { font-family:'Playfair Display',serif; font-size:1.3rem; color:var(--gold); margin-bottom:6px; }
+.pin-sub { color:rgba(255,255,255,0.4); font-size:0.8rem; margin-bottom:28px; }
+.pin-dots { display:flex; justify-content:center; gap:12px; margin-bottom:24px; }
+.pin-dot {
+  width:14px; height:14px; border-radius:50%;
+  border:2px solid rgba(201,168,76,0.4); background:transparent;
+  transition:background 0.15s, border-color 0.15s;
+}
+.pin-dot.filled { background:var(--gold); border-color:var(--gold); }
+.pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
+.pin-btn {
+  background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px; padding:14px; font-family:'DM Sans',sans-serif;
+  font-size:1.1rem; font-weight:600; color:var(--white); cursor:pointer;
+  transition:background 0.15s;
+}
+.pin-btn:hover { background:rgba(201,168,76,0.15); border-color:rgba(201,168,76,0.3); }
+.pin-btn.wide { grid-column:span 2; }
+.pin-error { color:#e88080; font-size:0.8rem; min-height:18px; }
+
+/* ── LAYOUT ── */
+#app { display:none; height:100vh; display:none; flex-direction:column; }
+#app.visible { display:flex; }
+
+/* ── TOPBAR ── */
+.topbar {
+  background:var(--navy); border-bottom:3px solid var(--gold);
+  padding:0 24px; height:56px; display:flex; align-items:center;
+  justify-content:space-between; flex-shrink:0;
+}
+.topbar-logo { font-family:'Playfair Display',serif; font-size:1rem; color:var(--gold); }
+.topbar-logo span { color:rgba(255,255,255,0.6); font-size:0.75rem; font-weight:400; margin-left:8px; }
+.topbar-right { display:flex; align-items:center; gap:12px; }
+.topbar-user { color:rgba(255,255,255,0.45); font-size:0.75rem; }
+.btn-logout {
+  background:transparent; border:1px solid rgba(255,255,255,0.15);
+  color:rgba(255,255,255,0.5); font-family:'DM Sans',sans-serif;
+  font-size:0.72rem; padding:5px 12px; border-radius:5px; cursor:pointer;
+  transition:border-color 0.15s, color 0.15s;
+}
+.btn-logout:hover { border-color:rgba(201,168,76,0.4); color:var(--gold); }
+
+/* ── MAIN AREA ── */
+.main-area { display:flex; flex:1; overflow:hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width:200px; background:var(--navy-mid); flex-shrink:0;
+  display:flex; flex-direction:column; border-right:1px solid rgba(201,168,76,0.1);
+  overflow-y:auto;
+}
+.sidebar-section { padding:16px 12px 8px; font-size:0.62rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,0.25); }
+.nav-item {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 16px; cursor:pointer; border-left:3px solid transparent;
+  transition:background 0.15s, border-color 0.15s; text-decoration:none;
+}
+.nav-item:hover { background:rgba(255,255,255,0.05); }
+.nav-item.active { background:rgba(201,168,76,0.1); border-left-color:var(--gold); }
+.nav-item .nav-icon { font-size:1rem; flex-shrink:0; }
+.nav-item .nav-label { font-size:0.82rem; font-weight:500; color:rgba(255,255,255,0.7); }
+.nav-item.active .nav-label { color:var(--gold); font-weight:600; }
+.nav-badge {
+  margin-left:auto; background:var(--gold); color:var(--navy);
+  font-size:0.62rem; font-weight:700; padding:1px 6px; border-radius:100px;
+}
+
+/* ── CONTENT AREA ── */
+.content { flex:1; overflow-y:auto; padding:28px 32px; background:var(--cream); }
+.content::-webkit-scrollbar { width:4px; }
+.content::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+/* ── PAGE HEADER ── */
+.page-header { margin-bottom:24px; display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.page-title { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--navy); }
+.page-sub { font-size:0.8rem; color:var(--muted); margin-top:3px; }
+
+/* ── TABS ── */
+.tab-strip { display:flex; gap:4px; background:var(--cream-dark); border-radius:8px; padding:4px; margin-bottom:24px; width:fit-content; }
+.tab-btn {
+  padding:7px 16px; border-radius:6px; border:none; cursor:pointer;
+  font-family:'DM Sans',sans-serif; font-size:0.8rem; font-weight:500;
+  color:var(--muted); background:transparent; transition:background 0.15s, color 0.15s;
+}
+.tab-btn.active { background:var(--white); color:var(--navy); font-weight:600; box-shadow:0 1px 4px rgba(10,22,40,0.08); }
+
+/* ── CARDS ── */
+.card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:20px; }
+.card-title { font-size:0.9rem; font-weight:600; color:var(--navy); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+.card-title .card-icon { font-size:1rem; }
+
+/* ── FORM ELEMENTS ── */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.form-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.form-full { grid-column:1/-1; }
+.field { display:flex; flex-direction:column; gap:5px; }
+.field label { font-size:0.75rem; font-weight:600; color:var(--text); letter-spacing:0.3px; }
+.field label span { color:var(--muted); font-weight:400; margin-left:4px; }
+input[type=text], input[type=email], input[type=url], input[type=date],
+select, textarea {
+  border:1.5px solid var(--border); border-radius:7px; padding:9px 12px;
+  font-family:'DM Sans',sans-serif; font-size:0.85rem; color:var(--text);
+  background:var(--white); outline:none; transition:border-color 0.15s;
+  width:100%;
+}
+input:focus, select:focus, textarea:focus { border-color:var(--gold); }
+textarea { resize:vertical; min-height:100px; line-height:1.55; }
+textarea.tall { min-height:160px; }
+.field-hint { font-size:0.72rem; color:var(--muted); }
+
+/* ── ANSWER OPTIONS ── */
+.options-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.option-row { display:flex; align-items:center; gap:8px; }
+.option-letter-badge {
+  width:28px; height:28px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.75rem; font-weight:700; color:var(--navy);
+  background:var(--gold-pale); border:1.5px solid var(--gold);
+}
+.correct-radio { display:flex; gap:6px; align-items:center; cursor:pointer; }
+.correct-radio input { accent-color:var(--gold); width:15px; height:15px; cursor:pointer; }
+.correct-radio span { font-size:0.8rem; color:var(--muted); }
+
+/* ── VIDEO PICKER ── */
+.video-picker { border:1.5px solid var(--border); border-radius:7px; overflow:hidden; }
+.video-picker-tabs { display:flex; border-bottom:1px solid var(--border); }
+.vp-tab {
+  flex:1; padding:8px; text-align:center; cursor:pointer;
+  font-size:0.75rem; font-weight:600; color:var(--muted);
+  background:var(--cream); border:none; font-family:'DM Sans',sans-serif;
+  transition:background 0.15s, color 0.15s;
+}
+.vp-tab.active { background:var(--white); color:var(--navy); }
+.video-picker-body { padding:12px; }
+.video-search-row { display:flex; gap:8px; margin-bottom:10px; }
+.video-search-row input { flex:1; }
+.btn-search {
+  background:var(--navy); color:var(--gold); border:none; padding:8px 14px;
+  border-radius:6px; font-family:'DM Sans',sans-serif; font-size:0.78rem;
+  font-weight:600; cursor:pointer; white-space:nowrap; transition:background 0.15s;
+}
+.btn-search:hover { background:var(--navy-light); }
+.video-results { display:flex; flex-direction:column; gap:8px; max-height:200px; overflow-y:auto; }
+.video-result-item {
+  display:flex; align-items:center; gap:10px; padding:8px;
+  border:1px solid var(--border); border-radius:6px; cursor:pointer;
+  transition:border-color 0.15s, background 0.15s;
+}
+.video-result-item:hover { border-color:var(--gold); background:var(--gold-pale); }
+.video-result-item.selected { border-color:var(--gold); background:var(--gold-pale); }
+.video-thumb {
+  width:64px; height:36px; border-radius:4px; object-fit:cover;
+  background:var(--navy); flex-shrink:0; display:flex; align-items:center;
+  justify-content:center; color:var(--gold); font-size:1.2rem;
+}
+.video-thumb img { width:100%; height:100%; object-fit:cover; border-radius:4px; }
+.video-result-title { font-size:0.78rem; font-weight:500; color:var(--text); line-height:1.3; }
+.video-selected-preview {
+  display:flex; align-items:center; gap:10px; padding:8px;
+  background:var(--success-bg); border:1px solid var(--success);
+  border-radius:6px; font-size:0.78rem; color:var(--success);
+}
+.video-selected-preview a { color:var(--success); font-size:0.72rem; }
+.btn-clear-video { background:none; border:none; color:var(--muted); cursor:pointer; margin-left:auto; font-size:0.9rem; }
+
+/* ── BUTTONS ── */
+.btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:20px; }
+.btn-primary {
+  background:var(--gold); color:var(--navy); border:none; padding:10px 22px;
+  border-radius:7px; font-family:'DM Sans',sans-serif; font-weight:700;
+  font-size:0.85rem; cursor:pointer; transition:background 0.15s;
+  display:flex; align-items:center; gap:6px;
+}
+.btn-primary:hover { background:var(--gold-light); }
+.btn-primary:disabled { opacity:0.5; cursor:default; }
+.btn-secondary {
+  background:var(--white); color:var(--navy); border:1.5px solid var(--border);
+  padding:10px 22px; border-radius:7px; font-family:'DM Sans',sans-serif;
+  font-weight:600; font-size:0.85rem; cursor:pointer; transition:border-color 0.15s, color 0.15s;
+}
+.btn-secondary:hover { border-color:var(--gold); color:var(--gold); }
+.btn-danger {
+  background:var(--danger-bg); color:var(--danger); border:1px solid #e8b0b0;
+  padding:10px 22px; border-radius:7px; font-family:'DM Sans',sans-serif;
+  font-weight:600; font-size:0.85rem; cursor:pointer; transition:background 0.15s;
+}
+.btn-danger:hover { background:#f8d8d8; }
+.btn-small {
+  padding:5px 12px; font-size:0.72rem; border-radius:5px;
+}
+.btn-icon { padding:6px 10px; font-size:0.85rem; }
+
+/* ── STATUS BADGES ── */
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:100px; font-size:0.68rem; font-weight:700;
+}
+.badge-draft    { background:#f0f0f0; color:#666; }
+.badge-approved { background:var(--success-bg); color:var(--success); }
+.badge-sent     { background:#e8eeff; color:#2a3880; }
+.badge-active   { background:var(--success-bg); color:var(--success); }
+.badge-archived { background:var(--danger-bg); color:var(--danger); }
+.badge-pending  { background:var(--warn-bg); color:var(--warn); }
+
+/* ── TABLE ── */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+thead tr { background:var(--navy); }
+thead th { padding:10px 14px; text-align:left; color:var(--gold); font-size:0.72rem; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; white-space:nowrap; }
+tbody tr { border-bottom:1px solid var(--border); transition:background 0.1s; }
+tbody tr:hover { background:#faf8f5; }
+tbody td { padding:10px 14px; color:var(--text); vertical-align:middle; }
+.td-muted { color:var(--muted); font-size:0.78rem; }
+.td-actions { display:flex; gap:6px; }
+
+/* ── STATS GRID ── */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:24px; }
+.stat-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; }
+.stat-num { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:700; color:var(--navy); margin-bottom:3px; }
+.stat-label { font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+.stat-card.gold .stat-num { color:var(--gold); }
+
+/* ── PREVIEW PANEL ── */
+.preview-panel {
+  background:var(--navy); border-radius:var(--radius); padding:20px;
+  color:rgba(255,255,255,0.85); font-size:0.85rem; line-height:1.7;
+  margin-top:16px; display:none;
+}
+.preview-panel.visible { display:block; }
+.preview-q { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--white); margin-bottom:14px; }
+.preview-opts { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.preview-opt {
+  display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.05);
+  border-radius:6px; padding:8px 12px; font-size:0.82rem;
+}
+.preview-opt.correct { background:rgba(26,122,74,0.2); border:1px solid rgba(26,122,74,0.4); }
+.preview-opt-letter { font-weight:700; color:var(--gold); width:16px; flex-shrink:0; }
+.preview-explanation { border-top:1px solid rgba(255,255,255,0.1); padding-top:12px; font-size:0.82rem; color:rgba(255,255,255,0.7); }
+
+/* ── CALLOUT ── */
+.callout { border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:0.82rem; display:flex; gap:10px; align-items:flex-start; }
+.callout.info { background:#eef2ff; border-left:3px solid #3346a0; color:#2a3880; }
+.callout.success { background:var(--success-bg); border-left:3px solid var(--success); color:#0f5c36; }
+.callout.warn { background:var(--warn-bg); border-left:3px solid #d48806; color:var(--warn); }
+
+/* ── LOADING / EMPTY ── */
+.loading-row td { text-align:center; padding:32px; color:var(--muted); }
+.empty-state { text-align:center; padding:48px 20px; color:var(--muted); }
+.empty-state .empty-icon { font-size:2.5rem; margin-bottom:12px; }
+.empty-state p { font-size:0.85rem; }
+
+/* ── TOAST ── */
+.toast {
+  position:fixed; bottom:24px; right:24px; z-index:500;
+  background:var(--navy); color:var(--white); padding:12px 20px;
+  border-radius:8px; font-size:0.85rem; font-weight:500;
+  border-left:4px solid var(--gold); box-shadow:0 8px 24px rgba(10,22,40,0.25);
+  transform:translateY(80px); opacity:0; transition:transform 0.3s, opacity 0.3s;
+  max-width:320px;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.error { border-left-color:#e84444; }
+.toast.success { border-left-color:var(--success); }
+
+/* ── RESPONSIVE ── */
+@media (max-width:768px) {
+  .sidebar { width:56px; }
+  .nav-label, .nav-badge, .sidebar-section { display:none; }
+  .content { padding:16px; }
+  .form-grid, .form-grid-3, .options-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- PIN GATE -->
+<div id="pinGate">
+  <div class="pin-card">
+    <div class="pin-logo">Ask Kris CMS</div>
+    <div class="pin-sub">Enter your 4-digit PIN to continue</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn" onclick="pinClear()">⌫</button>
+      <button class="pin-btn" onclick="pinPress('0')">0</button>
+      <button class="pin-btn" onclick="pinSubmit()">↵</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">Ask Kris CMS <span>v7 · The Real Estate Roundup</span></div>
+    <div class="topbar-right">
+      <span class="topbar-user">Kris Haskins</span>
+      <button class="btn-logout" onclick="logout()">Lock</button>
+    </div>
+  </div>
+
+  <div class="main-area">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="sidebar-section">Content</div>
+      <div class="nav-item active" onclick="showPage('qotd')" id="nav-qotd">
+        <span class="nav-icon">❓</span>
+        <span class="nav-label">QOTD</span>
+      </div>
+      <div class="nav-item" onclick="showPage('knowledge')" id="nav-knowledge">
+        <span class="nav-icon">🧠</span>
+        <span class="nav-label">Knowledge Base</span>
+      </div>
+      <div class="sidebar-section">Store</div>
+      <div class="nav-item" onclick="showPage('products')" id="nav-products">
+        <span class="nav-icon">🛍️</span>
+        <span class="nav-label">Products</span>
+      </div>
+      <div class="sidebar-section">Data</div>
+      <div class="nav-item" onclick="showPage('leads')" id="nav-leads">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Leads</span>
+      </div>
+      <div class="nav-item" onclick="showPage('sendlog')" id="nav-sendlog">
+        <span class="nav-icon">📨</span>
+        <span class="nav-label">Send Log</span>
+      </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <div class="content" id="mainContent">
+      <!-- Injected by JS -->
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+const API_URL  = 'https://script.google.com/macros/s/AKfycbyFae3UOTbDgwW3GqodMZRuGRWt2zUxz6FkrgOdDJw3M5pPEuZUiOvIPlRlq3Vbe2jf/exec';
+const CMS_PIN  = '1234'; // ← Change this to Kris's preferred PIN
+const YT_CHANNEL_ID = 'UCsMdIzwLBuCWrFt9zqhX2bA'; // Kris's YouTube channel ID
+
+// ═══════════════════════════════════════════
+// PIN GATE
+// ═══════════════════════════════════════════
+let pinValue = '';
+
+function pinPress(digit) {
+  if (pinValue.length >= 4) return;
+  pinValue += digit;
+  updatePinDots();
+  if (pinValue.length === 4) setTimeout(pinSubmit, 150);
+}
+
+function pinClear() {
+  pinValue = pinValue.slice(0, -1);
+  updatePinDots();
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('d' + i).classList.toggle('filled', i < pinValue.length);
+  }
+}
+
+function pinSubmit() {
+  if (pinValue === CMS_PIN) {
+    document.getElementById('pinGate').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    try { sessionStorage.setItem('cmsPinOk', '1'); } catch(e) {}
+    showPage('qotd');
+    loadDashboardData();
+  } else {
+    document.getElementById('pinError').textContent = 'Incorrect PIN — try again';
+    pinValue = '';
+    updatePinDots();
+    setTimeout(() => document.getElementById('pinError').textContent = '', 2000);
+  }
+}
+
+function logout() {
+  try { sessionStorage.removeItem('cmsPinOk'); } catch(e) {}
+  document.getElementById('pinGate').style.display = 'flex';
+  document.getElementById('app').classList.remove('visible');
+  pinValue = ''; updatePinDots();
+}
+
+// Auto-unlock if same session
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    if (sessionStorage.getItem('cmsPinOk')) {
+      document.getElementById('pinGate').style.display = 'none';
+      document.getElementById('app').classList.add('visible');
+      showPage('qotd');
+      loadDashboardData();
+    }
+  } catch(e) {}
+});
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+let currentPage = '';
+
+function showPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const nav = document.getElementById('nav-' + page);
+  if (nav) nav.classList.add('active');
+
+  const content = document.getElementById('mainContent');
+  switch(page) {
+    case 'qotd':      renderQOTDPage(content); break;
+    case 'knowledge': renderKnowledgePage(content); break;
+    case 'products':  renderProductsPage(content); break;
+    case 'leads':     renderLeadsPage(content); break;
+    case 'sendlog':   renderSendLogPage(content); break;
+  }
+}
+
+// ═══════════════════════════════════════════
+// API HELPERS
+// ═══════════════════════════════════════════
+async function api(params) {
+  if (!API_URL || API_URL === 'REPLACE_WITH_YOUR_APPS_SCRIPT_URL') {
+    return { status: 'error', message: 'API URL not configured. Update API_URL in cms/index.html.' };
+  }
+  const url = API_URL + '?' + new URLSearchParams(params).toString();
+  const res  = await fetch(url);
+  return res.json();
+}
+
+// ═══════════════════════════════════════════
+// DASHBOARD DATA (stats for sidebar badges)
+// ═══════════════════════════════════════════
+let dashStats = { leads: 0, pendingQOTD: 0 };
+
+async function loadDashboardData() {
+  try {
+    const [leadsRes, qotdRes] = await Promise.all([
+      api({ action: 'getLeads' }),
+      api({ action: 'getQOTD', status: 'Draft' })
+    ]);
+    if (leadsRes.status === 'ok') {
+      dashStats.leads = leadsRes.data.length;
+      const badge = document.querySelector('#nav-leads .nav-badge');
+      if (badge) badge.textContent = dashStats.leads;
+      else {
+        const el = document.querySelector('#nav-leads');
+        if (el) el.innerHTML += `<span class="nav-badge">${dashStats.leads}</span>`;
+      }
+    }
+    if (qotdRes.status === 'ok' && qotdRes.count > 0) {
+      const el = document.querySelector('#nav-qotd');
+      if (el && !el.querySelector('.nav-badge'))
+        el.innerHTML += `<span class="nav-badge">${qotdRes.count}</span>`;
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════
+// ── PAGE: QOTD ──
+// ═══════════════════════════════════════════
+let qotdList = [], qotdEditId = null, selectedVideoUrl = '', selectedVideoTitle = '', productsList = [];
+
+async function renderQOTDPage(el) {
+  el.innerHTML = `
+    <div class="page-header">
+      <div><div class="page-title">Question of the Day</div><div class="page-sub">Create, approve and schedule your daily questions</div></div>
+      <button class="btn-primary" onclick="showQOTDForm()">+ New Question</button>
+    </div>
+    <div class="tab-strip">
+      <button class="tab-btn active" onclick="switchQOTDTab('list',this)">All Questions</button>
+      <button class="tab-btn" onclick="switchQOTDTab('compose',this)">Compose</button>
+    </div>
+    <div id="qotdListTab"></div>
+    <div id="qotdComposeTab" style="display:none;"></div>`;
+
+  await loadProducts();
+  await loadQOTDList();
+}
+
+function switchQOTDTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('qotdListTab').style.display   = tab === 'list'    ? 'block' : 'none';
+  document.getElementById('qotdComposeTab').style.display = tab === 'compose' ? 'block' : 'none';
+  if (tab === 'compose' && document.getElementById('qotdComposeTab').innerHTML === '')
+    renderQOTDCompose();
+}
+
+async function loadQOTDList() {
+  const el = document.getElementById('qotdListTab');
+  if (!el) return;
+  el.innerHTML = `<div class="card"><div class="loading-row" style="text-align:center;padding:24px;color:var(--muted);">Loading questions…</div></div>`;
+  try {
+    const res = await api({ action: 'getQOTD' });
+    if (res.status !== 'ok') { el.innerHTML = `<div class="callout warn"><span>⚠️</span><div>Could not load questions. Check your API URL.</div></div>`; return; }
+    qotdList = res.data || [];
+    if (qotdList.length === 0) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">❓</div><p>No questions yet.<br>Click "New Question" to create your first QOTD.</p></div>`;
+      return;
+    }
+    el.innerHTML = `
+      <div class="card" style="padding:0;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Date</th><th>Topic</th><th>Question</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody>${qotdList.map(q => `
+              <tr>
+                <td class="td-muted" style="white-space:nowrap;">${q['Scheduled Date'] || '—'}</td>
+                <td><span style="font-size:0.75rem;">${q['Topic'] || '—'}</span></td>
+                <td style="max-width:280px;"><span style="font-size:0.8rem;line-height:1.4;">${(q['Question']||'').substring(0,80)}${(q['Question']||'').length>80?'…':''}</span></td>
+                <td>${statusBadge(q['Status'])}</td>
+                <td>
+                  <div class="td-actions">
+                    <button class="btn-secondary btn-small" onclick="editQOTD('${q['ID']}')">Edit</button>
+                    ${q['Status']==='Draft'?`<button class="btn-primary btn-small" onclick="approveQOTD('${q['ID']}')">Approve</button>`:''}
+                    <button class="btn-danger btn-small btn-icon" title="Archive" onclick="archiveQOTD('${q['ID']}')">📦</button>
+                    <button class="btn-danger btn-small btn-icon" title="Delete forever" style="background:#f8d8d8;" onclick="hardDeleteQOTD('${q['ID']}')">🗑</button>
+                  </div>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="callout warn"><span>⚠️</span><div>Error loading questions: ${e.message}</div></div>`;
+  }
+}
+
+function renderQOTDCompose(data = {}) {
+  const el = document.getElementById('qotdComposeTab');
+  if (!el) return;
+  selectedVideoUrl   = data['Video Link'] || '';
+  selectedVideoTitle = data['Video Link'] ? 'Selected video' : '';
+  qotdEditId = data['ID'] || null;
+
+  const productOptions = productsList.map(p =>
+    `<option value="${p['ID']}" ${data['Related Product']===p['ID']?'selected':''}>${p['Name']}</option>`
+  ).join('');
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-title"><span class="card-icon">${qotdEditId ? '✏️' : '➕'}</span>${qotdEditId ? 'Edit Question' : 'New Question'}</div>
+
+      ${!API_URL || API_URL==='REPLACE_WITH_YOUR_APPS_SCRIPT_URL' ? `<div class="callout warn"><span>⚠️</span><div>API URL not configured. Questions won't save until you update API_URL in this file.</div></div>` : ''}
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Scheduled Date</label>
+          <input type="date" id="qDate" value="${data['Scheduled Date']||''}">
+        </div>
+        <div class="field">
+          <label>Topic <span>(e.g. Flipping Houses, Section 8)</span></label>
+          <input type="text" id="qTopic" value="${data['Topic']||''}" placeholder="Flipping Houses">
+        </div>
+      </div>
+
+      <div class="field form-full" style="margin-top:14px;">
+        <label>Question</label>
+        <textarea id="qQuestion" class="tall" placeholder="When selling a flip, which expense do most investors forget to budget for?">${data['Question']||''}</textarea>
+      </div>
+
+      <div style="margin-top:16px;">
+        <div class="card-title" style="font-size:0.82rem;margin-bottom:10px;">Answer Options</div>
+        <div class="options-grid">
+          ${['A','B','C','D'].map(l => `
+            <div class="field">
+              <div class="option-row">
+                <div class="option-letter-badge">${l}</div>
+                <input type="text" id="qOpt${l}" value="${data['Option '+l]||''}" placeholder="Answer option ${l}">
+              </div>
+            </div>`).join('')}
+        </div>
+        <div style="margin-top:12px;display:flex;gap:20px;flex-wrap:wrap;">
+          <label>Correct Answer:</label>
+          ${['A','B','C','D'].map(l => `
+            <label class="correct-radio">
+              <input type="radio" name="correctAnswer" value="${l}" ${(data['Correct Answer']||'A')===l?'checked':''}>
+              <span>${l}</span>
+            </label>`).join('')}
+        </div>
+      </div>
+
+      <div class="field form-full" style="margin-top:16px;">
+        <label>Kris's Explanation <span>(write in your own voice)</span></label>
+        <textarea id="qExplanation" class="tall" placeholder="When I first started flipping houses, I thought once I bought it right and fixed it up, I was done…">${data['Explanation']||''}</textarea>
+      </div>
+
+      <!-- VIDEO PICKER -->
+      <div class="field form-full" style="margin-top:16px;">
+        <label>Related Video <span>(find or paste a YouTube link)</span></label>
+        <div class="video-picker">
+          <div class="video-picker-tabs">
+            <button class="vp-tab active" onclick="switchVPTab('search',this)">🔍 Search YouTube</button>
+            <button class="vp-tab" onclick="switchVPTab('paste',this)">🔗 Paste URL</button>
+          </div>
+          <div class="video-picker-body">
+            <div id="vpSearch">
+              <div class="video-search-row">
+                <input type="text" id="ytSearchInput" placeholder="e.g. seller concessions, Section 8, subject to…">
+                <button class="btn-search" onclick="searchYouTube()">Search</button>
+              </div>
+              <div id="ytResults"></div>
+            </div>
+            <div id="vpPaste" style="display:none;">
+              <div class="field">
+                <input type="url" id="ytPasteUrl" value="${selectedVideoUrl}" placeholder="https://www.youtube.com/watch?v=...">
+                <div class="field-hint">Paste any YouTube video URL from Kris's channel</div>
+              </div>
+              <button class="btn-secondary btn-small" style="margin-top:8px;" onclick="setVideoFromPaste()">Use This Video</button>
+            </div>
+            <div id="vpSelected" style="margin-top:10px;${selectedVideoUrl?'':'display:none;'}">
+              <div class="video-selected-preview">
+                ✅ Video selected — <a href="${selectedVideoUrl}" target="_blank">${selectedVideoUrl.substring(0,50)}${selectedVideoUrl.length>50?'…':''}</a>
+                <button class="btn-clear-video" onclick="clearVideo()">✕</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCT LINK -->
+      <div class="form-grid" style="margin-top:16px;">
+        <div class="field">
+          <label>Related Product <span>(shown after answer reveal)</span></label>
+          <select id="qProduct" onchange="updateProductLink()">
+            <option value="">— None —</option>
+            ${productOptions}
+          </select>
+        </div>
+        <div class="field">
+          <label>Product Link <span>(auto-filled or override)</span></label>
+          <input type="url" id="qProductLink" value="${data['Product Link']||''}" placeholder="https://...">
+        </div>
+      </div>
+
+      <!-- PREVIEW -->
+      <button class="btn-secondary" style="margin-top:16px;" onclick="togglePreview()">👁 Preview Question</button>
+      <div class="preview-panel" id="previewPanel"></div>
+
+      <!-- ACTIONS -->
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveQOTD('Draft')">💾 Save as Draft</button>
+        <button class="btn-primary" style="background:var(--success);color:white;" onclick="saveQOTD('Approved')">✅ Save & Approve</button>
+        ${qotdEditId ? `<button class="btn-danger" onclick="archiveQOTD('${qotdEditId}')">🗑 Archive</button>` : ''}
+        <button class="btn-secondary" onclick="clearQOTDForm()">Clear Form</button>
+      </div>
+    </div>`;
+}
+
+function switchVPTab(tab, btn) {
+  document.querySelectorAll('.vp-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('vpSearch').style.display = tab === 'search' ? 'block' : 'none';
+  document.getElementById('vpPaste').style.display  = tab === 'paste'  ? 'block' : 'none';
+}
+
+async function searchYouTube() {
+  const q     = document.getElementById('ytSearchInput').value.trim();
+  const resEl = document.getElementById('ytResults');
+  if (!q) return;
+
+  resEl.innerHTML = `<div style="color:var(--muted);font-size:0.78rem;padding:8px 0;">Searching…</div>`;
+
+  try {
+    // Use YouTube RSS feed as a proxy (no API key needed)
+    const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YT_CHANNEL_ID}`;
+    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}&count=20`);
+    const data = await res.json();
+
+    if (!data.items || data.items.length === 0) {
+      resEl.innerHTML = `<div style="color:var(--muted);font-size:0.78rem;padding:8px 0;">No results. Try pasting a URL instead.</div>`;
+      return;
+    }
+
+    // Filter by search term
+    const term    = q.toLowerCase();
+    const matches = data.items.filter(v => v.title.toLowerCase().includes(term));
+    const display = matches.length > 0 ? matches : data.items.slice(0, 8);
+
+    resEl.innerHTML = `<div class="video-results">${display.slice(0,8).map(v => `
+      <div class="video-result-item" onclick="selectVideo('${v.link}','${v.title.replace(/'/g,"\\'")}')">
+        <div class="video-thumb">
+          ${v.thumbnail ? `<img src="${v.thumbnail}" alt="">` : '▶'}
+        </div>
+        <div class="video-result-title">${v.title}</div>
+      </div>`).join('')}</div>`;
+
+  } catch(e) {
+    resEl.innerHTML = `<div style="color:var(--muted);font-size:0.78rem;padding:8px 0;">Search unavailable — please paste the URL directly.</div>`;
+  }
+}
+
+function selectVideo(url, title) {
+  selectedVideoUrl   = url;
+  selectedVideoTitle = title;
+  updateVideoPreview();
+  document.querySelectorAll('.video-result-item').forEach(i => i.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+}
+
+function setVideoFromPaste() {
+  const url = document.getElementById('ytPasteUrl').value.trim();
+  if (!url) return;
+  selectedVideoUrl   = url;
+  selectedVideoTitle = 'Pasted video';
+  updateVideoPreview();
+}
+
+function updateVideoPreview() {
+  const el = document.getElementById('vpSelected');
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML = `<div class="video-selected-preview">
+    ✅ Video selected — <a href="${selectedVideoUrl}" target="_blank">${selectedVideoUrl.substring(0,50)}${selectedVideoUrl.length>50?'…':''}</a>
+    <button class="btn-clear-video" onclick="clearVideo()">✕</button>
+  </div>`;
+}
+
+function clearVideo() {
+  selectedVideoUrl = ''; selectedVideoTitle = '';
+  const el = document.getElementById('vpSelected');
+  if (el) el.style.display = 'none';
+}
+
+function updateProductLink() {
+  const sel = document.getElementById('qProduct');
+  const product = productsList.find(p => p['ID'] === sel.value);
+  if (product && product['Checkout URL']) {
+    document.getElementById('qProductLink').value = product['Checkout URL'];
+  }
+}
+
+function togglePreview() {
+  const panel = document.getElementById('previewPanel');
+  const q     = document.getElementById('qQuestion').value.trim();
+  if (!q) { toast('Enter a question first', 'error'); return; }
+
+  const correct = document.querySelector('input[name="correctAnswer"]:checked')?.value || 'A';
+  const opts = ['A','B','C','D'].map(l => ({
+    letter: l,
+    text: document.getElementById('qOpt'+l)?.value || ''
+  })).filter(o => o.text);
+
+  panel.innerHTML = `
+    <div style="font-size:0.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">Preview</div>
+    <div class="preview-q">${q}</div>
+    <div class="preview-opts">
+      ${opts.map(o => `
+        <div class="preview-opt ${o.letter===correct?'correct':''}">
+          <span class="preview-opt-letter">${o.letter}</span>
+          <span>${o.text}</span>
+          ${o.letter===correct?' <span style="margin-left:auto;color:var(--success);font-size:0.75rem;">✓ Correct</span>':''}
+        </div>`).join('')}
+    </div>
+    ${document.getElementById('qExplanation')?.value ? `
+      <div class="preview-explanation">
+        <div style="color:var(--gold);font-size:0.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Kris's Explanation</div>
+        ${document.getElementById('qExplanation').value}
+      </div>` : ''}`;
+  panel.classList.toggle('visible');
+}
+
+async function saveQOTD(status) {
+  const correct  = document.querySelector('input[name="correctAnswer"]:checked')?.value || 'A';
+  const date     = document.getElementById('qDate')?.value || '';
+  const question = document.getElementById('qQuestion')?.value || '';
+
+  if (!question) { toast('Please enter a question', 'error'); return; }
+  if (!date)     { toast('Please set a scheduled date', 'error'); return; }
+
+  // Duplicate date check (skip if editing same entry)
+  if (!qotdEditId) {
+    const clash = qotdList.find(q => {
+      const d    = q['Scheduled Date'];
+      const dStr = d ? String(d).split('T')[0] : '';
+      return dStr === date && q['Status'] !== 'Archived';
+    });
+    if (clash && !confirm(`A question is already scheduled for ${date} (Status: ${clash['Status']}). Save anyway?`)) return;
+  }
+
+  // Disable ALL buttons immediately — prevent double submit
+  document.querySelectorAll('#qotdComposeTab button').forEach(b => {
+    b.disabled = true; b.style.opacity = '0.55';
+  });
+
+  // Optimistic: switch to list + toast immediately so it feels instant
+  const tabs = document.querySelectorAll('.tab-btn');
+  if (tabs[0]) tabs[0].click();
+  toast(status === 'Approved' ? '⏳ Approving…' : '⏳ Saving…');
+
+  const params = {
+    action:        qotdEditId ? 'updateQOTD' : 'addQOTD',
+    scheduledDate: date,
+    topic:         document.getElementById('qTopic')?.value || '',
+    question,
+    optionA:       document.getElementById('qOptA')?.value || '',
+    optionB:       document.getElementById('qOptB')?.value || '',
+    optionC:       document.getElementById('qOptC')?.value || '',
+    optionD:       document.getElementById('qOptD')?.value || '',
+    correctAnswer: correct,
+    explanation:   document.getElementById('qExplanation')?.value || '',
+    videoLink:     selectedVideoUrl,
+    relatedProduct:document.getElementById('qProduct')?.value || '',
+    productLink:   document.getElementById('qProductLink')?.value || '',
+    status
+  };
+  if (qotdEditId) params.id = qotdEditId;
+  clearQOTDForm();
+
+  try {
+    const res = await api(params);
+    if (res.status === 'ok') {
+      toast(status === 'Approved' ? '✅ Question approved!' : '✅ Question saved!', 'success');
+      await loadQOTDList();
+    } else {
+      toast('Save failed: ' + (res.message || 'Unknown error'), 'error');
+    }
+  } catch(e) {
+    toast('Error saving: ' + e.message, 'error');
+  }
+}
+
+async function approveQOTD(id) {
+  // Optimistic update — mark as approved in the list immediately
+  const row = qotdList.find(q => q['ID'] === id);
+  if (row) row['Status'] = 'Approved';
+
+  // Disable the clicked button immediately
+  const btn = document.querySelector(`button[onclick="approveQOTD('${id}')"]`);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+
+  toast('⏳ Approving…');
+  await loadQOTDList(); // Refresh list with optimistic state
+
+  try {
+    const res = await api({ action: 'updateQOTD', id, status: 'Approved' });
+    if (res.status === 'ok') { toast('✅ Question approved!', 'success'); await loadQOTDList(); }
+    else { toast('Error: ' + res.message, 'error'); await loadQOTDList(); }
+  } catch(e) { toast('Error: ' + e.message, 'error'); await loadQOTDList(); }
+}
+
+async function archiveQOTD(id) {
+  if (!confirm('Archive this question? It will be hidden but not deleted.')) return;
+  try {
+    const res = await api({ action: 'deleteQOTD', id });
+    if (res.status === 'ok') { toast('Question archived ✓', 'success'); await loadQOTDList(); }
+    else toast('Error: ' + res.message, 'error');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function hardDeleteQOTD(id) {
+  if (!confirm('⚠️ PERMANENTLY DELETE this question? This cannot be undone.')) return;
+  try {
+    const res = await api({ action: 'hardDeleteQOTD', id });
+    if (res.status === 'ok') { toast('Question permanently deleted', 'success'); await loadQOTDList(); }
+    else toast('Error: ' + res.message, 'error');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+function editQOTD(id) {
+  const q = qotdList.find(q => q['ID'] === id);
+  if (!q) return;
+  // Switch to compose tab
+  const composBtn = document.querySelectorAll('.tab-btn')[1];
+  if (composBtn) composBtn.click();
+  renderQOTDCompose(q);
+}
+
+function clearQOTDForm() {
+  qotdEditId = null; selectedVideoUrl = ''; selectedVideoTitle = '';
+  renderQOTDCompose();
+}
+
+function showQOTDForm() {
+  const composeBtn = document.querySelectorAll('.tab-btn')[1];
+  if (composeBtn) composeBtn.click();
+  renderQOTDCompose();
+}
+
+// ═══════════════════════════════════════════
+// ── PAGE: KNOWLEDGE BASE ──
+// ═══════════════════════════════════════════
+let kbEditId = null, kbList = [];
+
+async function renderKnowledgePage(el) {
+  el.innerHTML = `
+    <div class="page-header">
+      <div><div class="page-title">Knowledge Base</div><div class="page-sub">Content the Ask Kris chatbot uses to answer questions</div></div>
+      <button class="btn-primary" onclick="showKBForm()">+ Add Content</button>
+    </div>
+    <div class="tab-strip">
+      <button class="tab-btn active" onclick="switchKBTab('list',this)">All Content</button>
+      <button class="tab-btn" onclick="switchKBTab('add',this)">Add Content</button>
+    </div>
+    <div id="kbListTab"></div>
+    <div id="kbAddTab" style="display:none;"></div>`;
+  await loadKBList();
+}
+
+function switchKBTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('kbListTab').style.display = tab === 'list' ? 'block' : 'none';
+  document.getElementById('kbAddTab').style.display  = tab === 'add'  ? 'block' : 'none';
+  if (tab === 'add' && document.getElementById('kbAddTab').innerHTML === '') renderKBForm();
+}
+
+async function loadKBList() {
+  const el = document.getElementById('kbListTab');
+  if (!el) return;
+  el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);">Loading…</div>`;
+  try {
+    const res = await api({ action: 'getKnowledge' });
+    kbList = res.data || [];
+    if (kbList.length === 0) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">🧠</div><p>No content yet.<br>Add your first transcript, FAQ, or PDF content.</p></div>`;
+      return;
+    }
+    el.innerHTML = `
+      <div class="card" style="padding:0;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Type</th><th>Title</th><th>Tags</th><th>Status</th><th>Added</th><th>Actions</th></tr></thead>
+            <tbody>${kbList.map(k => `
+              <tr>
+                <td><span class="badge badge-pending">${k['Type']||'—'}</span></td>
+                <td style="max-width:240px;font-size:0.82rem;">${k['Title']||'—'}</td>
+                <td class="td-muted" style="font-size:0.75rem;">${(k['Tags']||'').substring(0,40)}</td>
+                <td>${statusBadge(k['Status'])}</td>
+                <td class="td-muted">${k['Date Added']||'—'}</td>
+                <td>
+                  <div class="td-actions">
+                    <button class="btn-secondary btn-small" onclick="editKB('${k['ID']}')">Edit</button>
+                    <button class="btn-danger btn-small btn-icon" title="Archive" onclick="archiveKB('${k['ID']}')">📦</button>
+                    <button class="btn-danger btn-small btn-icon" title="Delete forever" style="background:#f8d8d8;" onclick="hardDeleteKB('${k['ID']}')">🗑</button>
+                  </div>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="callout warn"><span>⚠️</span><div>Error: ${e.message}</div></div>`;
+  }
+}
+
+function renderKBForm(data = {}) {
+  const el = document.getElementById('kbAddTab');
+  if (!el) return;
+  kbEditId = data['ID'] || null;
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-title">${kbEditId ? '✏️ Edit Entry' : '➕ Add Content'}</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Type</label>
+          <select id="kbType">
+            ${['Transcript','FAQ','PDF','Video','Audio'].map(t =>
+              `<option value="${t}" ${(data['Type']||'Transcript')===t?'selected':''}>${t}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="kbStatus">
+            ${['Active','Draft','Archived'].map(s =>
+              `<option value="${s}" ${(data['Status']||'Active')===s?'selected':''}>${s}</option>`
+            ).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="field form-full" style="margin-top:14px;">
+        <label>Title</label>
+        <input type="text" id="kbTitle" value="${data['Title']||''}" placeholder="e.g. How to Handle Seller Concessions">
+      </div>
+      <div class="field form-full" style="margin-top:14px;">
+        <label>Content <span>(paste full transcript, FAQ answer, or PDF text)</span></label>
+        <textarea id="kbContent" style="min-height:220px;" placeholder="Paste the full content here — the more detail, the better the chatbot's answers…">${data['Content']||''}</textarea>
+      </div>
+      <div class="form-grid" style="margin-top:14px;">
+        <div class="field">
+          <label>Source URL <span>(YouTube link, PDF URL, etc.)</span></label>
+          <input type="url" id="kbUrl" value="${data['URL']||''}" placeholder="https://youtube.com/watch?v=...">
+        </div>
+        <div class="field">
+          <label>Tags <span>(comma separated)</span></label>
+          <input type="text" id="kbTags" value="${data['Tags']||''}" placeholder="negotiating, flipping, seller concessions">
+        </div>
+      </div>
+      <div class="field form-full" style="margin-top:14px;">
+        <label>Related Products <span>(product IDs, comma separated)</span></label>
+        <input type="text" id="kbProducts" value="${data['Related Products']||''}" placeholder="PROD_001, PROD_007">
+        <div class="field-hint">Use product IDs from the Products page to help the chatbot recommend the right course.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveKB()">💾 Save Content</button>
+        ${kbEditId ? `<button class="btn-danger" onclick="archiveKB('${kbEditId}')">🗑 Archive</button>` : ''}
+        <button class="btn-secondary" onclick="clearKBForm()">Clear</button>
+      </div>
+    </div>`;
+}
+
+async function saveKB() {
+  const params = {
+    action:          kbEditId ? 'updateKnowledge' : 'addKnowledge',
+    type:            document.getElementById('kbType')?.value,
+    title:           document.getElementById('kbTitle')?.value,
+    content:         document.getElementById('kbContent')?.value,
+    url:             document.getElementById('kbUrl')?.value,
+    tags:            document.getElementById('kbTags')?.value,
+    relatedProducts: document.getElementById('kbProducts')?.value,
+    status:          document.getElementById('kbStatus')?.value
+  };
+  if (kbEditId) params.id = kbEditId;
+  if (!params.title) { toast('Please enter a title', 'error'); return; }
+  if (!params.content) { toast('Please enter content', 'error'); return; }
+  try {
+    const res = await api(params);
+    if (res.status === 'ok') {
+      toast('Content saved ✓', 'success');
+      clearKBForm();
+      await loadKBList();
+      document.querySelectorAll('.tab-btn')[0]?.click();
+    } else toast('Error: ' + res.message, 'error');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function archiveKB(id) {
+  if (!confirm('Archive this content? The chatbot will stop using it, but it can be restored.')) return;
+  try {
+    const res = await api({ action: 'deleteKnowledge', id });
+    if (res.status === 'ok') { toast('Content archived ✓', 'success'); await loadKBList(); }
+    else toast('Error: ' + res.message, 'error');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function hardDeleteKB(id) {
+  if (!confirm('⚠️ PERMANENTLY DELETE this content? This cannot be undone.')) return;
+  try {
+    const res = await api({ action: 'hardDeleteKnowledge', id });
+    if (res.status === 'ok') { toast('Content permanently deleted', 'success'); await loadKBList(); }
+    else toast('Error: ' + res.message, 'error');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+function editKB(id) {
+  const k = kbList.find(k => k['ID'] === id);
+  if (!k) return;
+  document.querySelectorAll('.tab-btn')[1]?.click();
+  renderKBForm(k);
+}
+
+function showKBForm() { document.querySelectorAll('.tab-btn')[1]?.click(); renderKBForm(); }
+function clearKBForm() { kbEditId = null; renderKBForm(); }
+
+// ═══════════════════════════════════════════
+// ── PAGE: PRODUCTS ──
+// ═══════════════════════════════════════════
+async function renderProductsPage(el) {
+  el.innerHTML = `
+    <div class="page-header">
+      <div><div class="page-title">Products</div><div class="page-sub">Manage courses, books, and services</div></div>
+    </div>
+    <div id="productsContent"><div style="text-align:center;padding:24px;color:var(--muted);">Loading…</div></div>`;
+  await loadProductsList();
+}
+
+async function loadProductsList() {
+  const el = document.getElementById('productsContent');
+  if (!el) return;
+  try {
+    const res = await api({ action: 'getProducts' });
+    const products = res.data || [];
+    if (products.length === 0) {
+      el.innerHTML = `<div class="callout info"><span>💡</span><div>No products found. Run seedProducts() in Apps Script to load Kris's product catalog.</div></div>`;
+      return;
+    }
+    el.innerHTML = products.map(p => `
+      <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <span style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--navy);">${p['Name']}</span>
+              <span class="badge ${p['Active']==='TRUE'||p['Active']===true?'badge-active':'badge-archived'}">${p['Active']==='TRUE'||p['Active']===true?'Active':'Inactive'}</span>
+              <span class="badge badge-pending">${p['Category']||''}</span>
+            </div>
+            <div style="font-size:0.82rem;color:var(--muted);margin-bottom:8px;">${p['Description']||''}</div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+              ${p['Price']?`<span style="font-size:0.78rem;"><strong>Price:</strong> ${p['Price']}</span>`:''}
+              ${p['Checkout URL']?`<a href="${p['Checkout URL']}" target="_blank" style="font-size:0.78rem;color:var(--gold);">Checkout →</a>`:''}
+            </div>
+          </div>
+          <button class="btn-secondary btn-small" onclick="editProduct('${p['ID']}')">Edit</button>
+        </div>
+        <div id="editProduct_${p['ID']}" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <div class="form-grid">
+            <div class="field"><label>Name</label><input type="text" id="pName_${p['ID']}" value="${p['Name']||''}"></div>
+            <div class="field"><label>Category</label>
+              <select id="pCat_${p['ID']}">
+                ${['Flipping','Renting','Marketing','Documents','Books','Consulting'].map(c =>
+                  `<option value="${c}" ${p['Category']===c?'selected':''}>${c}</option>`
+                ).join('')}
+              </select>
+            </div>
+            <div class="field"><label>Price</label><input type="text" id="pPrice_${p['ID']}" value="${p['Price']||''}"></div>
+            <div class="field"><label>Active</label>
+              <select id="pActive_${p['ID']}">
+                <option value="TRUE" ${p['Active']==='TRUE'||p['Active']===true?'selected':''}>Active</option>
+                <option value="FALSE" ${p['Active']==='FALSE'||p['Active']===false?'selected':''}>Inactive</option>
+              </select>
+            </div>
+            <div class="field form-full"><label>Description</label><textarea id="pDesc_${p['ID']}">${p['Description']||''}</textarea></div>
+            <div class="field"><label>Checkout URL</label><input type="url" id="pCheckout_${p['ID']}" value="${p['Checkout URL']||''}"></div>
+            <div class="field"><label>Sales Page URL</label><input type="url" id="pSales_${p['ID']}" value="${p['Sales Page URL']||''}"></div>
+            <div class="field"><label>Tags</label><input type="text" id="pTags_${p['ID']}" value="${p['Tags']||''}"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn-primary" onclick="saveProduct('${p['ID']}')">💾 Save Changes</button>
+            <button class="btn-secondary" onclick="editProduct('${p['ID']}')">Cancel</button>
+          </div>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="callout warn"><span>⚠️</span><div>Error: ${e.message}</div></div>`;
+  }
+}
+
+function editProduct(id) {
+  const panel = document.getElementById('editProduct_' + id);
+  if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveProduct(id) {
+  const params = {
+    action:      'updateProduct',
+    id,
+    name:        document.getElementById('pName_'+id)?.value,
+    category:    document.getElementById('pCat_'+id)?.value,
+    description: document.getElementById('pDesc_'+id)?.value,
+    price:       document.getElementById('pPrice_'+id)?.value,
+    checkoutUrl: document.getElementById('pCheckout_'+id)?.value,
+    salesPageUrl:document.getElementById('pSales_'+id)?.value,
+    tags:        document.getElementById('pTags_'+id)?.value,
+    active:      document.getElementById('pActive_'+id)?.value
+  };
+  try {
+    const res = await api(params);
+    if (res.status === 'ok') { toast('Product updated ✓', 'success'); await loadProductsList(); }
+    else toast('Error: ' + res.message, 'error');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function loadProducts() {
+  try {
+    const res = await api({ action: 'getProducts', active: 'true' });
+    productsList = res.data || [];
+  } catch(e) { productsList = []; }
+}
+
+// ═══════════════════════════════════════════
+// ── PAGE: LEADS ──
+// ═══════════════════════════════════════════
+async function renderLeadsPage(el) {
+  el.innerHTML = `
+    <div class="page-header">
+      <div><div class="page-title">Leads</div><div class="page-sub">Email addresses captured from chatbot and QOTD page</div></div>
+    </div>
+    <div id="leadsContent"><div style="text-align:center;padding:24px;color:var(--muted);">Loading…</div></div>`;
+
+  try {
+    const res = await api({ action: 'getLeads' });
+    const leads = (res.data || []).reverse();
+    const total      = leads.length;
+    const chatbot    = leads.filter(l => l['Source'] === 'chatbot').length;
+    const qotd       = leads.filter(l => l['Source'] === 'qotd-optin').length;
+    const today      = leads.filter(l => l['Date'] === new Date().toISOString().split('T')[0]).length;
+
+    document.getElementById('leadsContent').innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card gold"><div class="stat-num">${total}</div><div class="stat-label">Total Leads</div></div>
+        <div class="stat-card"><div class="stat-num">${chatbot}</div><div class="stat-label">From Chatbot</div></div>
+        <div class="stat-card"><div class="stat-num">${qotd}</div><div class="stat-label">From QOTD</div></div>
+        <div class="stat-card"><div class="stat-num">${today}</div><div class="stat-label">Today</div></div>
+      </div>
+      ${leads.length === 0 ? `<div class="empty-state"><div class="empty-icon">📋</div><p>No leads yet. They'll appear here as visitors subscribe.</p></div>` : `
+      <div class="card" style="padding:0;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Source</th><th>First Question</th><th>Date</th><th>Time</th></tr></thead>
+            <tbody>${leads.map(l => `
+              <tr>
+                <td>${l['Name']||'—'}</td>
+                <td><a href="mailto:${l['Email']}" style="color:var(--gold);text-decoration:none;">${l['Email']||'—'}</a></td>
+                <td><span class="badge badge-pending">${l['Source']||'—'}</span></td>
+                <td class="td-muted" style="max-width:260px;font-size:0.75rem;">${(l['First Question']||'').substring(0,60)}</td>
+                <td class="td-muted">${l['Date']||'—'}</td>
+                <td class="td-muted">${l['Time']||'—'}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`}`;
+  } catch(e) {
+    document.getElementById('leadsContent').innerHTML = `<div class="callout warn"><span>⚠️</span><div>Error loading leads: ${e.message}</div></div>`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// ── PAGE: SEND LOG ──
+// ═══════════════════════════════════════════
+async function renderSendLogPage(el) {
+  el.innerHTML = `
+    <div class="page-header">
+      <div><div class="page-title">Send Log</div><div class="page-sub">History of every QOTD email sent by n8n</div></div>
+    </div>
+    <div id="sendLogContent"><div style="text-align:center;padding:24px;color:var(--muted);">Loading…</div></div>`;
+
+  try {
+    const res  = await api({ action: 'getSendLog' });
+    const logs = (res.data || []).reverse();
+
+    document.getElementById('sendLogContent').innerHTML = logs.length === 0
+      ? `<div class="empty-state"><div class="empty-icon">📨</div><p>No emails sent yet.<br>Once n8n sends the first QOTD email it will appear here.</p></div>`
+      : `<div class="card" style="padding:0;">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Subject</th><th>Recipients</th><th>Status</th><th>Timestamp</th></tr></thead>
+              <tbody>${logs.map(l => `
+                <tr>
+                  <td class="td-muted">${l['Date']||'—'}</td>
+                  <td style="font-size:0.82rem;">${l['Subject']||'—'}</td>
+                  <td class="td-muted">${l['Recipients']||'—'}</td>
+                  <td>${l['Status']==='sent'?'<span class="badge badge-approved">Sent</span>':'<span class="badge badge-archived">'+l['Status']+'</span>'}</td>
+                  <td class="td-muted" style="font-size:0.72rem;">${l['Timestamp']||'—'}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+  } catch(e) {
+    document.getElementById('sendLogContent').innerHTML = `<div class="callout warn"><span>⚠️</span><div>Error: ${e.message}</div></div>`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════
+function statusBadge(status) {
+  const map = {
+    'Draft':    'badge-draft',
+    'Approved': 'badge-approved',
+    'Sent':     'badge-sent',
+    'Active':   'badge-active',
+    'Archived': 'badge-archived'
+  };
+  return `<span class="badge ${map[status]||'badge-draft'}">${status||'Draft'}</span>`;
+}
+</script>
+</body>
+</html>
